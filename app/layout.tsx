@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Roboto, Roboto_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -8,24 +8,24 @@ import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
-  description: "Next.js chatbot template using the AI SDK.",
+  title: "Witely",
+  description: "Never Copy & Paste Again; Witely Gives You the Anwsers You Need, Before You Ask",
 };
 
 export const viewport = {
   maximumScale: 1, // Disable auto-zoom on mobile Safari
 };
 
-const geist = Geist({
+const geist = Roboto({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist",
+  variable: "--font-roboto",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = Roboto_Mono({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist-mono",
+  variable: "--font-roboto-mono",
 });
 
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
