@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LiquidEther from "@/components/ui/liquid-ether";
@@ -41,9 +42,17 @@ const Page = () => {
           </p>
 
           <div className="flex flex-wrap justify-start gap-3">
-            <Button className="hidden sm:flex" size="lg" variant="default">
-              Get Witely Today <ArrowRight size={32} />
-            </Button>
+            <Link href={"/login"}>
+              <Button className="hidden sm:flex" size="lg" variant="outline">
+                Sign in
+              </Button>
+            </Link>
+
+            <Link href={"/login"}>
+              <Button className="hidden sm:flex" size="lg" variant="default">
+                Get Witely Today <ArrowRight size={32} />
+              </Button>
+            </Link>
 
             <Input
               className="w-full sm:hidden"
@@ -51,9 +60,11 @@ const Page = () => {
               type="email"
             />
 
-            <Button className="w-full sm:hidden" size="lg" variant="default">
-              Email me Witely
-            </Button>
+            <div className="w-full sm:hidden">
+              <Button className="w-full sm:hidden" size="lg" variant="default">
+                Email me Witely
+              </Button>
+            </div>
           </div>
         </div>
 

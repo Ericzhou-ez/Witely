@@ -1,18 +1,15 @@
 import { compare } from "bcrypt-ts";
 import NextAuth, { type DefaultSession } from "next-auth";
 import type { DefaultJWT } from "next-auth/jwt";
-import Credentials from "next-auth/providers/credentials";
-import { DUMMY_PASSWORD } from "@/lib/constants";
-import { createGuestUser, getUser } from "@/lib/db/queries";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import { createUser, getUser } from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
-
-export type UserType = "guest" | "regular";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      type: UserType;
     } & DefaultSession["user"];
   }
 
@@ -20,14 +17,12 @@ declare module "next-auth" {
   interface User {
     id?: string;
     email?: string | null;
-    type: UserType;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
-    type: UserType;
   }
 }
 
@@ -39,38 +34,76 @@ export const {
 } = NextAuth({
   ...authConfig,
   providers: [
-    Credentials({
-      credentials: {},
-      async authorize({ email, password }: any) {
-        const users = await getUser(email);
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: {
+          label: "Email",
+          type: "text",
+          placeholder: "example@witely.com",
+        },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials.email as string;
+        const password = credentials.password as string;
 
-        if (users.length === 0) {
-          await compare(password, DUMMY_PASSWORD);
-          return null;
+        const [userRecord] = await getUser(email);
+
+        if (!userRecord) {
+          throw new Error("Invalid credentials"); // User not found
         }
 
-        const [user] = users;
+        const isPasswordValid = await compare(
+          password,
+          userRecord.password ?? ""
+        );
 
-        if (!user.password) {
-          await compare(password, DUMMY_PASSWORD);
-          return null;
+        if (!isPasswordValid) {
+          throw new Error("Invalid credentials"); // Password incorrect
         }
 
-        const passwordsMatch = await compare(password, user.password);
-
-        if (!passwordsMatch) {
-          return null;
-        }
-
-        return { ...user, type: "regular" };
+        return {
+          id: userRecord.id.toString(),
+          email: userRecord.email,
+        };
       },
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "credentials") {
+        return true;
+      }
+
+      // for Oauth providers
+      if (account?.provider === "google") {
+        if (!user.email) {
+          return false;
+        }
+
+        // check if user exists
+        const [existingUser] = await getUser(user.email);
+
+        if (!existingUser) {
+          await createUser(
+            user.email,
+            null,
+            user.name ?? "user",
+            user.image ?? null
+          );
+        }
+      }
+
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id as string;
-        token.type = user.type;
       }
 
       return token;
@@ -78,7 +111,6 @@ export const {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
-        session.user.type = token.type;
       }
 
       return session;

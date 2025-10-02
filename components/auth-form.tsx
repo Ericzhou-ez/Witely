@@ -7,15 +7,40 @@ export function AuthForm({
   action,
   children,
   defaultEmail = "",
+  defaultName = "",
+  isReg,
 }: {
   action: NonNullable<
     string | ((formData: FormData) => void | Promise<void>) | undefined
   >;
   children: React.ReactNode;
   defaultEmail?: string;
+  defaultName?: string;
+  isReg: boolean;
 }) {
   return (
     <Form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
+      {isReg && (
+        <div className="flex flex-col gap-2">
+          <Label
+            className="font-normal text-zinc-600 dark:text-zinc-400"
+            htmlFor="name"
+          >
+            Name
+          </Label>
+
+          <Input
+            autoComplete="name"
+            className="bg-muted text-md md:text-sm"
+            defaultValue={defaultName}
+            id="name"
+            name="name"
+            required
+            type="name"
+          />
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
         <Label
           className="font-normal text-zinc-600 dark:text-zinc-400"
@@ -31,7 +56,7 @@ export function AuthForm({
           defaultValue={defaultEmail}
           id="email"
           name="email"
-          placeholder="user@acme.com"
+          placeholder="example@witely.com"
           required
           type="email"
         />
