@@ -10,8 +10,8 @@ type Entitlements = {
 export const entitlementsByUserType: Record<UserType, Entitlements> = {
   /*
    * TODO: entitlement based on credits, not max msg / day
-   * Signing in via Credentials will be dev
-   * Signing in via OAuth will be plus
+   * Signing in via Credentials will be dev in dev mode
+   * Signing in via OAuth will be free
    */
 
   free: {
