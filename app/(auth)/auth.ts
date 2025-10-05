@@ -91,13 +91,9 @@ export const {
       }
 
       const [existingUser] = await getUser(user.email);
-
+  
+      // for Oauth providers
       if (account?.provider === "google") {
-        // for Oauth providers
-        if (!user.email) {
-          return false;
-        }
-
         if (existingUser) {
           user.id = existingUser.id;
           user.type = existingUser.type;

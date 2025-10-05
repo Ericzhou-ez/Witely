@@ -7,7 +7,7 @@ import {
 import { isTestEnvironment } from "../constants";
 import { chatModels } from "./models";
 
-export const myProvider = false
+export const myProvider = isTestEnvironment
   ? (() => {
       const {
         artifactModel,

@@ -165,13 +165,10 @@
     display: none;
   }
 
+  /* IE and Edge */
   /* Firefox */
   .scrollbar-hidden {
     scrollbar-width: none;
-  }
-
-  /* IE and Edge */
-  .scrollbar-hidden {
     -ms-overflow-style: none;
   }
 }
