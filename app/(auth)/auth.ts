@@ -49,7 +49,7 @@ export const {
         email: {
           label: "Email",
           type: "text",
-          placeholder: "example@witely.com",
+          placeholder: "example@witely.ai",
         },
         password: { label: "Password", type: "password" },
       },

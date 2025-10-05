@@ -8,6 +8,7 @@ import {
   Sparkles,
   WandSparkles,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   DropdownMenuItem,
@@ -17,6 +18,7 @@ import { toast } from "./toast";
 
 export function UserMenu() {
   const { status } = useSession();
+  const router = useRouter();
 
   return (
     <>
@@ -24,7 +26,7 @@ export function UserMenu() {
         className="cursor-pointer"
         onClick={() => {
           // Handle upgrade plan navigation
-          window.location.href = "/upgrade";
+          router.push("/upgrade");
         }}
       >
         <Sparkles className="mr-0.5 size-4" />
@@ -34,7 +36,7 @@ export function UserMenu() {
       <DropdownMenuItem
         className="cursor-pointer"
         onClick={() => {
-          window.open("https://witely.com", "_blank");
+          window.open("https://witely.ai", "_blank");
         }}
       >
         <WandSparkles className="mr-0.5 size-4" />
@@ -45,7 +47,7 @@ export function UserMenu() {
       <DropdownMenuItem
         className="cursor-pointer"
         onClick={() => {
-          window.open("https://help.witely.com", "_blank");
+          window.open("https://help.witely.ai", "_blank");
         }}
       >
         <HelpCircle className="mr-0.5 size-4" />
