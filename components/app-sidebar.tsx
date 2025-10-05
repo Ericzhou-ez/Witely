@@ -1,5 +1,6 @@
 "use client";
 
+import { LayoutDashboard, Shield, Waypoints } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
@@ -11,8 +12,13 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -34,7 +40,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               }}
             >
               <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                Chatbot
+                Witely
               </span>
             </Link>
             <Tooltip>
@@ -60,6 +66,56 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        <div className="sticky top-0 z-10 bg-sidebar pb-2">
+          <SidebarGroup>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild size={"sm"}>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => {
+                        setOpenMobile(false);
+                      }}
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild size={"sm"}>
+                    <Link
+                      href="/integrations"
+                      onClick={() => {
+                        setOpenMobile(false);
+                      }}
+                    >
+                      <Waypoints className="h-4 w-4" />
+                      <span>Integrations</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild size={"sm"}>
+                    <Link
+                      href="/data-control"
+                      onClick={() => {
+                        setOpenMobile(false);
+                      }}
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Data Control</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </div>
+
         <SidebarHistory user={user} />
       </SidebarContent>
       <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>

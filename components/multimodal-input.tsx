@@ -4,6 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { Trigger } from "@radix-ui/react-select";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
+import { ArrowDownIcon } from "lucide-react";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -42,6 +43,7 @@ import {
   PaperclipIcon,
   StopIcon,
 } from "./icons";
+import { ModelSelector } from "./model-selector";
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
@@ -61,8 +63,9 @@ function PureMultimodalInput({
   className,
   selectedVisibilityType,
   selectedModelId,
-  onModelChange,
   usage,
+  isAtBottom,
+  scrollToBottom,
 }: {
   chatId: string;
   input: string;
@@ -79,6 +82,8 @@ function PureMultimodalInput({
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
   usage?: AppUsage;
+  isAtBottom?: boolean;
+  scrollToBottom?: (behavior?: "smooth" | "instant") => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -86,6 +91,7 @@ function PureMultimodalInput({
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "44px";
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
     }
   }, []);
 
@@ -124,6 +130,7 @@ function PureMultimodalInput({
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
+    adjustHeight();
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -253,8 +260,24 @@ function PureMultimodalInput({
         type="file"
       />
 
+      {scrollToBottom && (
+        <button
+          aria-label="Scroll to bottom"
+          className={cn(
+            "-translate-x-1/2 -top-10 absolute left-1/2 z-10 rounded-full border bg-background p-2 shadow-lg transition-all duration-300 ease-out hover:bg-muted",
+            isAtBottom
+              ? "pointer-events-none translate-y-8 opacity-0"
+              : "translate-y-0 opacity-100"
+          )}
+          onClick={() => scrollToBottom("smooth")}
+          type="button"
+        >
+          <ArrowDownIcon size={16} />
+        </button>
+      )}
+
       <PromptInput
-        className="rounded-xl border border-border bg-background p-3 shadow-xs transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
+        className="z-50 rounded-b-none rounded-tl-xl rounded-tr-xl border border-border/50 border-b-0 p-3 shadow-lg transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50 focus:border-border"
         onSubmit={(event) => {
           event.preventDefault();
           if (status !== "ready") {
@@ -300,30 +323,28 @@ function PureMultimodalInput({
         <div className="flex flex-row items-start gap-1 sm:gap-2">
           <PromptInputTextarea
             autoFocus
-            className="grow resize-none border-0! border-none! bg-transparent p-2 text-sm outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
+            className="grow resize-none border-0! border-none! bg-transparent p-2 text-base leading-relaxed outline-none ring-0 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
             data-testid="multimodal-input"
             disableAutoResize={true}
-            maxHeight={200}
+            maxHeight={300}
             minHeight={44}
             onChange={handleInput}
             placeholder="Send a message..."
             ref={textareaRef}
             rows={1}
+            style={{ maxHeight: "300px", overflowY: "auto" }}
             value={input}
-          />{" "}
+          />
           <Context {...contextProps} />
         </div>
-        <PromptInputToolbar className="!border-top-0 border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
+        <PromptInputToolbar className="!border-top-0 border-t-0! pt-2 shadow-none dark:border-0 dark:border-transparent!">
           <PromptInputTools className="gap-0 sm:gap-0.5">
             <AttachmentsButton
               fileInputRef={fileInputRef}
               selectedModelId={selectedModelId}
               status={status}
             />
-            <ModelSelectorCompact
-              onModelChange={onModelChange}
-              selectedModelId={selectedModelId}
-            />
+            <ModelSelectorCompact selectedModelId={selectedModelId} />
           </PromptInputTools>
 
           {status === "submitted" ? (
@@ -361,6 +382,9 @@ export const MultimodalInput = memo(
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
       return false;
     }
+    if (prevProps.isAtBottom !== nextProps.isAtBottom) {
+      return false;
+    }
 
     return true;
   }
@@ -395,7 +419,7 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
-function PureModelSelectorCompact({
+export function PureModelSelectorCompact({
   selectedModelId,
   onModelChange,
 }: {
@@ -414,8 +438,8 @@ function PureModelSelectorCompact({
 
   return (
     <PromptInputModelSelect
-      onValueChange={(modelName) => {
-        const model = chatModels.find((m) => m.name === modelName);
+      onValueChange={(modelId) => {
+        const model = chatModels.find((m) => m.id === modelId);
         if (model) {
           setOptimisticModelId(model.id);
           onModelChange?.(model.id);
@@ -424,7 +448,7 @@ function PureModelSelectorCompact({
           });
         }
       }}
-      value={selectedModel?.name}
+      value={selectedModel?.id}
     >
       <Trigger
         className="flex h-8 items-center gap-2 rounded-lg border-0 bg-background px-2 text-foreground shadow-none transition-colors hover:bg-accent focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -439,8 +463,10 @@ function PureModelSelectorCompact({
       <PromptInputModelSelectContent className="min-w-[260px] p-0">
         <div className="flex flex-col gap-px">
           {chatModels.map((model) => (
-            <SelectItem key={model.id} value={model.name}>
-              <div className="truncate font-medium text-xs">{model.name}</div>
+            <SelectItem key={model.id} value={model.id}>
+              <div className="truncate font-medium text-xs">
+                {model.name} {model.model}
+              </div>
               <div className="mt-px truncate text-[10px] text-muted-foreground leading-tight">
                 {model.description}
               </div>
@@ -452,7 +478,7 @@ function PureModelSelectorCompact({
   );
 }
 
-const ModelSelectorCompact = memo(PureModelSelectorCompact);
+const ModelSelectorCompact = memo(ModelSelector);
 
 function PureStopButton({
   stop,

@@ -15,6 +15,7 @@ export function useMessages({
     scrollToBottom,
     onViewportEnter,
     onViewportLeave,
+    navigateToBottom,
   } = useScrollToBottom();
 
   const [hasSentMessage, setHasSentMessage] = useState(false);
@@ -29,9 +30,10 @@ export function useMessages({
     containerRef,
     endRef,
     isAtBottom,
+    hasSentMessage,
     scrollToBottom,
     onViewportEnter,
     onViewportLeave,
-    hasSentMessage,
+    navigateToBottom,
   };
 }

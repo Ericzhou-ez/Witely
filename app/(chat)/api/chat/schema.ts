@@ -1,13 +1,14 @@
 import { z } from "zod";
+import { ALL_MODEL_IDS } from "@/lib/ai/models";
 
 const textPartSchema = z.object({
   type: z.enum(["text"]),
-  text: z.string().min(1).max(2000),
+  text: z.string().min(1).max(5000),
 });
 
 const filePartSchema = z.object({
   type: z.enum(["file"]),
-  mediaType: z.enum(["image/jpeg", "image/png"]),
+  mediaType: z.enum(["image/jpeg", "image/png", "text"]),
   name: z.string().min(1).max(100),
   url: z.string().url(),
 });
@@ -21,7 +22,7 @@ export const postRequestBodySchema = z.object({
     role: z.enum(["user"]),
     parts: z.array(partSchema),
   }),
-  selectedChatModel: z.enum(["chat-model", "chat-model-reasoning"]),
+  selectedChatModel: z.enum([...ALL_MODEL_IDS] as [string, ...string[]]),
   selectedVisibilityType: z.enum(["public", "private"]),
 });
 

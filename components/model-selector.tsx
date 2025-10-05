@@ -1,6 +1,6 @@
 "use client";
 
-import type { Session } from "next-auth";
+import { useSession } from "next-auth/react";
 import { startTransition, useMemo, useOptimistic, useState } from "react";
 import { saveChatModelAsCookie } from "@/app/(chat)/actions";
 import { Button } from "@/components/ui/button";
@@ -16,18 +16,17 @@ import { cn } from "@/lib/utils";
 import { CheckCircleFillIcon, ChevronDownIcon } from "./icons";
 
 export function ModelSelector({
-  session,
   selectedModelId,
   className,
 }: {
-  session: Session;
   selectedModelId: string;
 } & React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
   const [optimisticModelId, setOptimisticModelId] =
     useOptimistic(selectedModelId);
 
-  const userType = session.user.type;
+  const { data: session } = useSession();
+  const userType = session?.user.type ?? "free";
   const { availableChatModelIds } = entitlementsByUserType[userType];
 
   const availableChatModels = chatModels.filter((chatModel) =>
@@ -56,7 +55,9 @@ export function ModelSelector({
           data-testid="model-selector"
           variant="outline"
         >
-          {selectedChatModel?.name}
+          {selectedChatModel
+            ? `${selectedChatModel?.name} ${selectedChatModel?.model}`
+            : "Unavaliable"}
           <ChevronDownIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -65,7 +66,7 @@ export function ModelSelector({
         className="min-w-[280px] max-w-[90vw] sm:min-w-[300px]"
       >
         {availableChatModels.map((chatModel) => {
-          const { id } = chatModel;
+          const id = chatModel.id;
 
           return (
             <DropdownMenuItem
@@ -87,7 +88,9 @@ export function ModelSelector({
                 type="button"
               >
                 <div className="flex flex-col items-start gap-1">
-                  <div className="text-sm sm:text-base">{chatModel.name}</div>
+                  <div className="text-sm sm:text-base">
+                    {chatModel.name} {chatModel.model}
+                  </div>
                   <div className="line-clamp-2 text-muted-foreground text-xs">
                     {chatModel.description}
                   </div>

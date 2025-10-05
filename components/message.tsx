@@ -18,7 +18,6 @@ import {
   ToolInput,
   ToolOutput,
 } from "./elements/tool";
-import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
@@ -66,12 +65,6 @@ const PurePreviewMessage = ({
           "justify-start": message.role === "assistant",
         })}
       >
-        {message.role === "assistant" && (
-          <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
-            <SparklesIcon size={14} />
-          </div>
-        )}
-
         <div
           className={cn("flex flex-col", {
             "gap-2 md:gap-4": message.parts?.some(
@@ -126,7 +119,7 @@ const PurePreviewMessage = ({
                   <div key={key}>
                     <MessageContent
                       className={cn({
-                        "w-fit break-words rounded-2xl px-3 py-2 text-right text-white":
+                        "user-message-text !rounded-bl-xl w-fit break-words rounded-2xl border border-sidebar-border px-4 py-2.5":
                           message.role === "user",
                         "bg-transparent px-0 py-0 text-left":
                           message.role === "assistant",
@@ -134,7 +127,10 @@ const PurePreviewMessage = ({
                       data-testid="message-content"
                       style={
                         message.role === "user"
-                          ? { backgroundColor: "#006cff" }
+                          ? {
+                              backgroundColor: "var(--sidebar-background)",
+                              color: "var(--foreground)",
+                            }
                           : undefined
                       }
                     >
@@ -321,10 +317,6 @@ export const ThinkingMessage = () => {
       initial={{ opacity: 0 }}
     >
       <div className="flex items-start justify-start gap-3">
-        <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
-          <SparklesIcon size={14} />
-        </div>
-
         <div className="flex w-full flex-col gap-2 md:gap-4">
           <div className="p-0 text-muted-foreground text-sm">
             <LoadingText>Thinking...</LoadingText>

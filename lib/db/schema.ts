@@ -4,6 +4,7 @@ import {
   foreignKey,
   json,
   jsonb,
+  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -13,12 +14,21 @@ import {
 } from "drizzle-orm/pg-core";
 import type { AppUsage } from "../usage";
 
+export const userTypeEnum = pgEnum("user_type_enum", [
+  "plus",
+  "pro",
+  "ultra",
+  "dev",
+  "free",
+]);
+
 export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull(),
   name: varchar("name", { length: 64 }).notNull(),
   profileURL: varchar("profile_url", { length: 256 }),
   password: varchar("password", { length: 64 }),
+  type: userTypeEnum("type").default("free").notNull(),
 });
 
 export type User = InferSelectModel<typeof user>;

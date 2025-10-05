@@ -5,8 +5,9 @@ import {
   wrapLanguageModel,
 } from "ai";
 import { isTestEnvironment } from "../constants";
+import { chatModels } from "./models";
 
-export const myProvider = isTestEnvironment
+export const myProvider = false
   ? (() => {
       const {
         artifactModel,
@@ -23,14 +24,25 @@ export const myProvider = isTestEnvironment
         },
       });
     })()
-  : customProvider({
-      languageModels: {
-        "chat-model": gateway.languageModel("xai/grok-2-vision-1212"),
-        "chat-model-reasoning": wrapLanguageModel({
-          model: gateway.languageModel("xai/grok-3-mini"),
-          middleware: extractReasoningMiddleware({ tagName: "think" }),
-        }),
-        "title-model": gateway.languageModel("xai/grok-2-1212"),
-        "artifact-model": gateway.languageModel("xai/grok-2-1212"),
-      },
-    });
+  : (() => {
+      const languageModels: Record<string, any> = {};
+
+      for (const m of chatModels) {
+        if (m.reasoning) {
+          languageModels[m.id] = wrapLanguageModel({
+            model: gateway.languageModel(m.id),
+            middleware: extractReasoningMiddleware({ tagName: "think" }),
+          });
+        } else {
+          languageModels[m.id] = gateway.languageModel(m.id);
+        }
+      }
+
+      languageModels["title-model"] = gateway.languageModel("xai/grok-2-1212");
+      languageModels["artifact-model"] =
+        gateway.languageModel("xai/grok-2-1212"); //TODO: pick artifact based on user type
+
+      return customProvider({
+        languageModels,
+      });
+    })();

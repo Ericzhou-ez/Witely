@@ -155,13 +155,21 @@ export const ReasoningContent = memo(
   ({ className, children, ...props }: ReasoningContentProps) => (
     <CollapsibleContent
       className={cn(
-        "mt-2 text-muted-foreground text-xs",
+        "relative mt-4 text-muted-foreground text-xs",
         "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in",
         className
       )}
       {...props}
     >
-      <Response className="grid gap-2">{children}</Response>
+      <div className="relative h-fit max-h-[400px] overflow-y-auto rounded-2xl border border-border bg-secondary/10">
+        <div className="pointer-events-none absolute top-0 z-10 h-8 w-full rounded-t-2xl bg-gradient-to-b from-background to-transparent" />
+
+        <div className="h-full overflow-y-auto px-4 py-4">
+          <Response className="grid gap-2">{children}</Response>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-0 z-10 h-8 w-full rounded-b-2xl bg-gradient-to-t from-background to-transparent" />
+      </div>
     </CollapsibleContent>
   )
 );

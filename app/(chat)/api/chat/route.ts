@@ -115,6 +115,7 @@ export async function POST(request: Request) {
 
     const userType: UserType = session.user.type;
 
+    // TODO: credit based limit per month
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,

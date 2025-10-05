@@ -2,15 +2,11 @@
 
 import { ChevronUp } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
-import { signOut, useSession } from "next-auth/react";
-import { useTheme } from "next-themes";
+import { useSession } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -18,16 +14,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { guestRegex } from "@/lib/constants";
 import { LoaderIcon } from "./icons";
-import { toast } from "./toast";
+import { UserMenu } from "./user-menu";
 
 export function SidebarUserNav({ user }: { user: User }) {
-  const router = useRouter();
-  const { data, status } = useSession();
-  const { setTheme, resolvedTheme } = useTheme();
-
-  const isGuest = guestRegex.test(data?.user?.email ?? "");
+  const { status } = useSession();
 
   return (
     <SidebarMenu>
@@ -35,7 +26,7 @@ export function SidebarUserNav({ user }: { user: User }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             {status === "loading" ? (
-              <SidebarMenuButton className="h-10 justify-between bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+              <SidebarMenuButton className="h-12 justify-between bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <div className="flex flex-row gap-2">
                   <div className="size-6 animate-pulse rounded-full bg-zinc-500/30" />
                   <span className="animate-pulse rounded-md bg-zinc-500/30 text-transparent">
@@ -48,7 +39,7 @@ export function SidebarUserNav({ user }: { user: User }) {
               </SidebarMenuButton>
             ) : (
               <SidebarMenuButton
-                className="h-10 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                className="h-12 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 data-testid="user-nav-button"
               >
                 <Image
@@ -58,9 +49,20 @@ export function SidebarUserNav({ user }: { user: User }) {
                   src={`https://avatar.vercel.sh/${user.email}`}
                   width={24}
                 />
-                <span className="truncate" data-testid="user-email">
-                  {isGuest ? "Guest" : user?.email}
-                </span>
+                <div className="flex flex-col">
+                  <span
+                    className="truncate text-[0.86rem]"
+                    data-testid="user-email"
+                  >
+                    {user?.email}
+                  </span>
+                  <span
+                    className="truncate text-[0.7rem] text-muted-foreground"
+                    data-testid="user-email"
+                  >
+                    {user?.type}
+                  </span>
+                </div>
                 <ChevronUp className="ml-auto" />
               </SidebarMenuButton>
             )}
@@ -70,43 +72,7 @@ export function SidebarUserNav({ user }: { user: User }) {
             data-testid="user-nav-menu"
             side="top"
           >
-            <DropdownMenuItem
-              className="cursor-pointer"
-              data-testid="user-nav-item-theme"
-              onSelect={() =>
-                setTheme(resolvedTheme === "dark" ? "light" : "dark")
-              }
-            >
-              {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild data-testid="user-nav-item-auth">
-              <button
-                className="w-full cursor-pointer"
-                onClick={() => {
-                  if (status === "loading") {
-                    toast({
-                      type: "error",
-                      description:
-                        "Checking authentication status, please try again!",
-                    });
-
-                    return;
-                  }
-
-                  if (isGuest) {
-                    router.push("/login");
-                  } else {
-                    signOut({
-                      redirectTo: "/",
-                    });
-                  }
-                }}
-                type="button"
-              >
-                {isGuest ? "Login to your account" : "Sign out"}
-              </button>
-            </DropdownMenuItem>
+            <UserMenu />
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
