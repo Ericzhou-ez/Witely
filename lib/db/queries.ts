@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import type { UserType } from "@/app/(auth)/auth";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
@@ -52,18 +53,27 @@ export async function getUser(email: string): Promise<User[]> {
   }
 }
 
-export async function createUser(
-  email: string,
-  password: string | null,
-  name: string,
-  profileURL?: string | null
-) {
+export async function createUser({
+  email,
+  password,
+  name,
+  profileURL,
+  type,
+}: {
+  email: string;
+  password: string | null;
+  name: string;
+  profileURL?: string | null;
+  type?: UserType;
+}) {
   const hashedPassword = generateHashedPassword(password);
 
   try {
-    return await db
+    const [newUser] = await db
       .insert(user)
-      .values({ email, password: hashedPassword, name, profileURL });
+      .values({ email, password: hashedPassword, name, profileURL, type })
+      .returning();
+    return newUser;
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to create user");
   }

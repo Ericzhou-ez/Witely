@@ -6,10 +6,13 @@ import GoogleProvider from "next-auth/providers/google";
 import { createUser, getUser } from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
 
+export type UserType = "plus" | "pro" | "ultra" | "dev" | "free";
+
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      type: UserType;
     } & DefaultSession["user"];
   }
 
@@ -17,12 +20,14 @@ declare module "next-auth" {
   interface User {
     id?: string;
     email?: string | null;
+    type: UserType;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
+    type: UserType;
   }
 }
 
@@ -70,6 +75,7 @@ export const {
         return {
           id: userRecord.id.toString(),
           email: userRecord.email,
+          type: userRecord.type,
         };
       },
     }),
@@ -80,22 +86,31 @@ export const {
         return true;
       }
 
-      // for Oauth providers
+      if (!user?.email) {
+        return false;
+      }
+
+      const [existingUser] = await getUser(user.email);
+
       if (account?.provider === "google") {
+        // for Oauth providers
         if (!user.email) {
           return false;
         }
 
-        // check if user exists
-        const [existingUser] = await getUser(user.email);
-
-        if (!existingUser) {
-          await createUser(
-            user.email,
-            null,
-            user.name ?? "user",
-            user.image ?? null
-          );
+        if (existingUser) {
+          user.id = existingUser.id;
+          user.type = existingUser.type;
+        } else {
+          const newUser = await createUser({
+            email: user.email,
+            password: null,
+            name: user.name ?? "user",
+            profileURL: user.image ?? null,
+          });
+          // Set the ID and type for the newly created user
+          user.id = newUser.id;
+          user.type = newUser.type;
         }
       }
 
@@ -104,6 +119,7 @@ export const {
     jwt({ token, user }) {
       if (user) {
         token.id = user.id as string;
+        token.type = user.type;
       }
 
       return token;
@@ -111,6 +127,7 @@ export const {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
+        session.user.type = token.type;
       }
 
       return session;
