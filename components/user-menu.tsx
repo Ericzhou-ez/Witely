@@ -61,7 +61,7 @@ export function UserMenu() {
         className="cursor-pointer"
         onClick={() => {
           // Handle settings navigation
-          window.location.href = "/settings";
+          router.push("/settings");
         }}
       >
         <Settings className="mr-0.5 size-4" />

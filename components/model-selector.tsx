@@ -57,7 +57,7 @@ export function ModelSelector({
         >
           {selectedChatModel
             ? `${selectedChatModel?.name} ${selectedChatModel?.model}`
-            : "Unavaliable"}
+            : "Unavailable"}
           <ChevronDownIcon />
         </Button>
       </DropdownMenuTrigger>

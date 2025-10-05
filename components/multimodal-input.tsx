@@ -36,14 +36,7 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "./elements/prompt-input";
-import {
-  ArrowUpIcon,
-  ChevronDownIcon,
-  CpuIcon,
-  PaperclipIcon,
-  StopIcon,
-} from "./icons";
-import { ModelSelector } from "./model-selector";
+import { ArrowUpIcon, ChevronDownIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
@@ -338,13 +331,16 @@ function PureMultimodalInput({
           <Context {...contextProps} />
         </div>
         <PromptInputToolbar className="!border-top-0 border-t-0! pt-2 shadow-none dark:border-0 dark:border-transparent!">
-          <PromptInputTools className="gap-0 sm:gap-0.5">
+          <PromptInputTools className="gap-0">
             <AttachmentsButton
               fileInputRef={fileInputRef}
               selectedModelId={selectedModelId}
               status={status}
             />
-            <ModelSelectorCompact selectedModelId={selectedModelId} />
+            <ModelSelectorCompact
+              messages={messages}
+              selectedModelId={selectedModelId}
+            />
           </PromptInputTools>
 
           {status === "submitted" ? (
@@ -419,12 +415,15 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
+// If message exists we do not allow model selection
 export function PureModelSelectorCompact({
   selectedModelId,
   onModelChange,
+  messages,
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  messages: UIMessage[];
 }) {
   const [optimisticModelId, setOptimisticModelId] = useState(selectedModelId);
 
@@ -436,9 +435,16 @@ export function PureModelSelectorCompact({
     (model) => model.id === optimisticModelId
   );
 
+  const hasMessages = messages.length > 0;
+
   return (
     <PromptInputModelSelect
+      disabled={hasMessages}
       onValueChange={(modelId) => {
+        if (hasMessages) {
+          return; // Prevent model change if messages exist
+        }
+
         const model = chatModels.find((m) => m.id === modelId);
         if (model) {
           setOptimisticModelId(model.id);
@@ -451,12 +457,15 @@ export function PureModelSelectorCompact({
       value={selectedModel?.id}
     >
       <Trigger
-        className="flex h-8 items-center gap-2 rounded-lg border-0 bg-background px-2 text-foreground shadow-none transition-colors hover:bg-accent focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+        className={cn(
+          "flex h-8 items-center gap-2 rounded-lg border-0 bg-background px-2 text-foreground shadow-none transition-colors focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0",
+          hasMessages ? "cursor-not-allowed opacity-50" : "hover:bg-accent"
+        )}
+        disabled={hasMessages}
         type="button"
       >
-        <CpuIcon size={16} />
-        <span className="hidden font-medium text-xs sm:block">
-          {selectedModel?.name}
+        <span className="hidden font-medium text-sm sm:block">
+          {selectedModel?.name} {selectedModel?.model}
         </span>
         <ChevronDownIcon size={16} />
       </Trigger>
@@ -478,7 +487,7 @@ export function PureModelSelectorCompact({
   );
 }
 
-const ModelSelectorCompact = memo(ModelSelector);
+const ModelSelectorCompact = memo(PureModelSelectorCompact);
 
 function PureStopButton({
   stop,
