@@ -78,11 +78,13 @@ export const register = async (
       return { status: "user_exists" } as RegisterActionState;
     }
 
+    // Whenever we create a new user in dev, we set the user.type to dev
     await createUser({
       email: validatedData.email,
       password: validatedData.password,
       name: validatedData.name,
       profileURL: null,
+      type: "dev",
     });
 
     await signIn("credentials", {
