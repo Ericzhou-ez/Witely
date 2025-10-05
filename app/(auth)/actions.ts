@@ -62,6 +62,10 @@ export const register = async (
   formData: FormData
 ): Promise<RegisterActionState> => {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return { status: "failed" };
+    }
+
     const validatedData = registerFormSchema.parse({
       email: formData.get("email"),
       name: formData.get("name"),
@@ -74,8 +78,6 @@ export const register = async (
       return { status: "user_exists" } as RegisterActionState;
     }
 
-    // TODO: on dev branch expose this func.
-    //       remove this function on prod.
     await createUser({
       email: validatedData.email,
       password: validatedData.password,
