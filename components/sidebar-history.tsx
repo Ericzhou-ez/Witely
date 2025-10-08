@@ -50,7 +50,7 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
 
   return chats.reduce(
     (groups, chat) => {
-      const chatDate = new Date(chat.createdAt);
+      const chatDate = new Date(chat.updatedAt);
 
       if (isToday(chatDate)) {
         groups.today.push(chat);
@@ -148,7 +148,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     setShowDeleteDialog(false);
 
     if (deleteId === id) {
-      router.push("/");
+      router.push("/chat");
     }
   };
 
@@ -215,7 +215,6 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                 const chatsFromHistory = paginatedChatHistories.flatMap(
                   (paginatedChatHistory) => paginatedChatHistory.chats
                 );
-
                 const groupedChats = groupChatsByDate(chatsFromHistory);
 
                 return (

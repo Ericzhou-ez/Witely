@@ -46,7 +46,7 @@ export function ModelSelector({
       <DropdownMenuTrigger
         asChild
         className={cn(
-          "w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
+          "w-fit rounded-lg data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
           className
         )}
       >
@@ -63,7 +63,7 @@ export function ModelSelector({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="min-w-[280px] max-w-[90vw] sm:min-w-[300px]"
+        className="max-h-[400px] min-w-[280px] max-w-[90vw] overflow-y-auto rounded-xl sm:min-w-[300px]"
       >
         {availableChatModels.map((chatModel) => {
           const id = chatModel.id;

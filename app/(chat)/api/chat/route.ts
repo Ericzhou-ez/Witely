@@ -41,7 +41,10 @@ import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
-import { generateTitleFromUserMessage } from "../../actions";
+import {
+  generateTitleFromUserMessage,
+  saveChatModelAsCookie,
+} from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
@@ -114,6 +117,9 @@ export async function POST(request: Request) {
     }
 
     const userType: UserType = session.user.type;
+
+    // Update chat model cookie with the current model ID
+    await saveChatModelAsCookie(selectedChatModel);
 
     // TODO: credit based limit per month
     const messageCount = await getMessageCountByUserId({

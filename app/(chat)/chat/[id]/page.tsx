@@ -64,7 +64,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       <Chat
         autoResume={true}
         id={chat.id}
-        initialChatModel={chatModelFromCookie.value}
+        initialChatModel={chat.lastContext?.modelId ?? DEFAULT_CHAT_MODEL}
         initialLastContext={chat.lastContext ?? undefined}
         initialMessages={uiMessages}
         initialVisibilityType={chat.visibility}
