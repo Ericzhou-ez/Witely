@@ -6,9 +6,14 @@ import { createUser, getUser } from "@/lib/db/queries";
 
 import { signIn } from "./auth";
 
-const authFormSchema = z.object({
+const registerFormSchema = z.object({
   email: z.string().email(),
   name: z.string().min(6).max(40),
+  password: z.string().min(6),
+});
+
+const signinFormSchema = z.object({
+  email: z.string().email(),
   password: z.string().min(6),
 });
 
@@ -21,7 +26,7 @@ export const login = async (
   formData: FormData
 ): Promise<LoginActionState> => {
   try {
-    const validatedData = authFormSchema.parse({
+    const validatedData = signinFormSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),
     });
@@ -57,7 +62,11 @@ export const register = async (
   formData: FormData
 ): Promise<RegisterActionState> => {
   try {
-    const validatedData = authFormSchema.parse({
+    if (process.env.NODE_ENV === "production") {
+      return { status: "failed" };
+    }
+
+    const validatedData = registerFormSchema.parse({
       email: formData.get("email"),
       name: formData.get("name"),
       password: formData.get("password"),
@@ -69,11 +78,14 @@ export const register = async (
       return { status: "user_exists" } as RegisterActionState;
     }
 
-    await createUser(
-      validatedData.email,
-      validatedData.password,
-      validatedData.name
-    );
+    // Whenever we create a new user in dev, we set the user.type to dev
+    await createUser({
+      email: validatedData.email,
+      password: validatedData.password,
+      name: validatedData.name,
+      profileURL: null,
+      type: "dev",
+    });
 
     await signIn("credentials", {
       email: validatedData.email,

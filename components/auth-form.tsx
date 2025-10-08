@@ -56,7 +56,7 @@ export function AuthForm({
           defaultValue={defaultEmail}
           id="email"
           name="email"
-          placeholder="example@witely.com"
+          placeholder="example@witely.ai"
           required
           type="email"
         />

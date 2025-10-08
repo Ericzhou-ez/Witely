@@ -91,6 +91,13 @@ export function useScrollToBottom() {
     [setScrollBehavior]
   );
 
+  const navigateToBottom = useCallback(
+    (currentScrollBehavior: ScrollBehavior = "auto") => {
+      setScrollBehavior(currentScrollBehavior);
+    },
+    [setScrollBehavior]
+  );
+
   function onViewportEnter() {
     setIsAtBottom(true);
   }
@@ -106,5 +113,6 @@ export function useScrollToBottom() {
     scrollToBottom,
     onViewportEnter,
     onViewportLeave,
+    navigateToBottom,
   };
 }

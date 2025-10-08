@@ -20,6 +20,7 @@ import {
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -147,6 +148,16 @@ export function Chat({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
+  const {
+    containerRef: messagesContainerRef,
+    endRef: messagesEndRef,
+    isAtBottom,
+    scrollToBottom,
+    hasSentMessage,
+  } = useMessages({
+    status,
+  });
+
   useAutoResume({
     autoResume,
     initialMessages,
@@ -165,24 +176,30 @@ export function Chat({
 
         <Messages
           chatId={id}
+          endRef={messagesEndRef}
+          hasSentMessage={hasSentMessage}
           isArtifactVisible={isArtifactVisible}
           isReadonly={isReadonly}
           messages={messages}
+          messagesContainerRef={messagesContainerRef}
           regenerate={regenerate}
+          scrollToBottom={scrollToBottom}
           selectedModelId={initialChatModel}
           setMessages={setMessages}
           status={status}
           votes={votes}
         />
 
-        <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+        <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-3xl gap-2 border-t-0 px-2 md:px-4">
           {!isReadonly && (
             <MultimodalInput
               attachments={attachments}
               chatId={id}
               input={input}
+              isAtBottom={isAtBottom}
               messages={messages}
               onModelChange={setCurrentModelId}
+              scrollToBottom={scrollToBottom}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}

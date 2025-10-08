@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import type { UserType } from "@/app/(auth)/auth";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
@@ -52,18 +53,27 @@ export async function getUser(email: string): Promise<User[]> {
   }
 }
 
-export async function createUser(
-  email: string,
-  password: string | null,
-  name: string,
-  profileURL?: string | null
-) {
+export async function createUser({
+  email,
+  password,
+  name,
+  profileURL,
+  type,
+}: {
+  email: string;
+  password: string | null;
+  name: string;
+  profileURL?: string | null;
+  type?: UserType;
+}) {
   const hashedPassword = generateHashedPassword(password);
 
   try {
-    return await db
+    const [newUser] = await db
       .insert(user)
-      .values({ email, password: hashedPassword, name, profileURL });
+      .values({ email, password: hashedPassword, name, profileURL, type })
+      .returning();
+    return newUser;
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to create user");
   }
@@ -97,10 +107,13 @@ export async function saveChat({
   title: string;
   visibility: VisibilityType;
 }) {
+  const now = new Date();
+
   try {
     return await db.insert(chat).values({
       id,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
       userId,
       title,
       visibility,
@@ -152,7 +165,7 @@ export async function getChatsByUserId({
             ? and(whereCondition, eq(chat.userId, id))
             : eq(chat.userId, id)
         )
-        .orderBy(desc(chat.createdAt))
+        .orderBy(desc(chat.updatedAt))
         .limit(extendedLimit);
 
     let filteredChats: Chat[] = [];
@@ -171,7 +184,7 @@ export async function getChatsByUserId({
         );
       }
 
-      filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(gt(chat.updatedAt, selectedChat.updatedAt));
     } else if (endingBefore) {
       const [selectedChat] = await db
         .select()
@@ -186,7 +199,7 @@ export async function getChatsByUserId({
         );
       }
 
-      filteredChats = await query(lt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(lt(chat.updatedAt, selectedChat.updatedAt));
     } else {
       filteredChats = await query();
     }
@@ -468,7 +481,10 @@ export async function updateChatVisiblityById({
   visibility: "private" | "public";
 }) {
   try {
-    return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
+    return await db
+      .update(chat)
+      .set({ visibility, updatedAt: new Date() })
+      .where(eq(chat.id, chatId));
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -488,7 +504,7 @@ export async function updateChatLastContextById({
   try {
     return await db
       .update(chat)
-      .set({ lastContext: context })
+      .set({ lastContext: context, updatedAt: new Date() })
       .where(eq(chat.id, chatId));
   } catch (error) {
     console.warn("Failed to update lastContext for chat", chatId, error);

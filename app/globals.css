@@ -40,7 +40,7 @@
   --sidebar-foreground: hsl(240 5.3% 26.1%);
   --sidebar-primary: hsl(240 5.9% 10%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent: hsl(240 5% 95%);
   --sidebar-accent-foreground: hsl(240 5.9% 10%);
   --sidebar-border: hsl(220 13% 91%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
@@ -51,7 +51,7 @@
 
 /* define design tokens (dark mode) */
 .dark {
-  --background: hsl(240 10% 3.9%);
+  --background: hsl(240, 10%, 8%);
   --foreground: hsl(0 0% 98%);
   --card: hsl(240 10% 3.9%);
   --card-foreground: hsl(0 0% 98%);
@@ -156,6 +156,20 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer utilities {
+  /* Chrome, Safari and Opera */
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* IE and Edge */
+  /* Firefox */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 }
 
@@ -341,4 +355,50 @@
 
 .animate-fade-out {
   animation: fade-out 0.35s ease-in 0.5s forwards;
+}
+
+/* Custom table styles for prose */
+.prose table {
+  @apply border-0;
+  border-collapse: collapse;
+  background-color: transparent !important;
+}
+
+.prose thead {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.prose thead th {
+  @apply font-bold border-b border-border border-t-0 border-l-0 border-r-0;
+  padding: 1rem;
+  background-color: transparent !important;
+}
+
+.prose tbody {
+  background-color: transparent !important;
+}
+
+.prose tbody td {
+  @apply border-b border-border border-t-0 border-l-0 border-r-0;
+  padding: 1rem;
+  background-color: transparent !important;
+}
+
+.prose tbody tr {
+  @apply border-0;
+  background-color: transparent !important;
+}
+
+.prose tbody tr:nth-child(2n) {
+  background-color: transparent !important;
+}
+
+.prose tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+.prose :where(table):not(:where([class~="not-prose"] *)) {
+  @apply border-0;
+  background-color: transparent !important;
 }

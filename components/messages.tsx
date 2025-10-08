@@ -1,8 +1,6 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
-import { ArrowDownIcon } from "lucide-react";
-import { memo, useEffect } from "react";
-import { useMessages } from "@/hooks/use-messages";
+import { memo, type RefObject, useEffect } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
@@ -20,6 +18,10 @@ type MessagesProps = {
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
+  messagesContainerRef: RefObject<HTMLDivElement>;
+  endRef: RefObject<HTMLDivElement>;
+  scrollToBottom: (behavior?: "smooth" | "instant") => void;
+  hasSentMessage: boolean;
 };
 
 function PureMessages({
@@ -31,17 +33,10 @@ function PureMessages({
   regenerate,
   isReadonly,
   selectedModelId,
+  messagesContainerRef,
+  endRef: messagesEndRef,
+  hasSentMessage,
 }: MessagesProps) {
-  const {
-    containerRef: messagesContainerRef,
-    endRef: messagesEndRef,
-    isAtBottom,
-    scrollToBottom,
-    hasSentMessage,
-  } = useMessages({
-    status,
-  });
-
   useDataStream();
 
   useEffect(() => {
@@ -60,11 +55,11 @@ function PureMessages({
 
   return (
     <div
-      className="overscroll-behavior-contain -webkit-overflow-scrolling-touch flex-1 touch-pan-y overflow-y-scroll"
+      className="overscroll-behavior-contain -webkit-overflow-scrolling-touch flex-1 touch-pan-y overflow-y-scroll pt-10"
       ref={messagesContainerRef}
       style={{ overflowAnchor: "none" }}
     >
-      <Conversation className="mx-auto flex min-w-0 max-w-4xl flex-col gap-4 md:gap-6">
+      <Conversation className="mx-auto flex min-w-0 max-w-3xl flex-col gap-4 md:gap-6">
         <ConversationContent className="flex flex-col gap-4 px-2 py-4 md:gap-6 md:px-4">
           {messages.length === 0 && <Greeting />}
 
@@ -96,22 +91,11 @@ function PureMessages({
             selectedModelId !== "chat-model-reasoning" && <ThinkingMessage />}
 
           <div
-            className="min-h-[24px] min-w-[24px] shrink-0"
+            className="min-h-[10px] min-w-[10px] shrink-0"
             ref={messagesEndRef}
           />
         </ConversationContent>
       </Conversation>
-
-      {!isAtBottom && (
-        <button
-          aria-label="Scroll to bottom"
-          className="-translate-x-1/2 absolute bottom-40 left-1/2 z-10 rounded-full border bg-background p-2 shadow-lg transition-colors hover:bg-muted"
-          onClick={() => scrollToBottom("smooth")}
-          type="button"
-        >
-          <ArrowDownIcon className="size-4" />
-        </button>
-      )}
     </div>
   );
 }
