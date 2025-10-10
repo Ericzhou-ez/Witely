@@ -3,6 +3,7 @@ import equal from "fast-deep-equal";
 import { memo, type RefObject, useEffect } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { AttachmentLoader } from "./attachment-loader";
 import { useDataStream } from "./data-stream-provider";
 import { Conversation, ConversationContent } from "./elements/conversation";
 import { Greeting } from "./greeting";
@@ -13,8 +14,6 @@ type MessagesProps = {
   status: UseChatHelpers<ChatMessage>["status"];
   votes: Vote[] | undefined;
   messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
@@ -29,8 +28,6 @@ function PureMessages({
   status,
   votes,
   messages,
-  setMessages,
-  regenerate,
   isReadonly,
   selectedModelId,
   messagesContainerRef,
@@ -72,11 +69,9 @@ function PureMessages({
               isReadonly={isReadonly}
               key={message.id}
               message={message}
-              regenerate={regenerate}
               requiresScrollPadding={
                 hasSentMessage && index === messages.length - 1
               }
-              setMessages={setMessages}
               vote={
                 votes
                   ? votes.find((vote) => vote.messageId === message.id)
@@ -85,10 +80,46 @@ function PureMessages({
             />
           ))}
 
-          {status === "submitted" &&
-            messages.length > 0 &&
-            messages.at(-1)?.role === "user" &&
-            selectedModelId !== "chat-model-reasoning" && <ThinkingMessage />}
+          {(() => {
+            if (selectedModelId === "chat-model-reasoning") {
+              return null;
+            }
+
+            const lastMessage = messages.at(-1);
+            const isWaitingForResponse =
+              lastMessage?.role === "user" ||
+              (lastMessage?.role === "assistant" &&
+                !lastMessage.parts?.some(
+                  (p) =>
+                    (p.type === "text" && p.text) ||
+                    (p.type === "reasoning" && p.text)
+                ));
+
+            if (!isWaitingForResponse) {
+              return null;
+            }
+
+            const userMessage =
+              lastMessage?.role === "assistant" ? messages.at(-2) : lastMessage;
+            const attachments = userMessage?.parts.filter(
+              (p) => p.type === "file"
+            );
+
+            return (
+              <>
+                {attachments && attachments.length > 0 && (
+                  <AttachmentLoader
+                    attachments={attachments.map((att: any) => ({
+                      name: att.name,
+                      mediaType: att.mediaType,
+                    }))}
+                    className="mx-auto w-full px-2 md:px-4"
+                  />
+                )}
+                {status === "submitted" && <ThinkingMessage />}
+              </>
+            );
+          })()}
 
           <div
             className="min-h-[10px] min-w-[10px] shrink-0"

@@ -6,20 +6,18 @@ import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
 
 export function PureMessageActions({
   chatId,
   message,
   vote,
   isLoading,
-  setMode,
 }: {
   chatId: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
-  setMode?: (mode: "view" | "edit") => void;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -44,34 +42,23 @@ export function PureMessageActions({
     toast.success("Copied to clipboard!");
   };
 
-  // User messages get edit (on hover) and copy actions
+  // User messages get copy action on hover
   if (message.role === "user") {
     return (
       <Actions className="-mr-0.5 justify-end">
-        <div className="relative">
-          {setMode && (
-            <Action
-              className="-left-10 absolute top-0 opacity-0 transition-opacity group-hover/message:opacity-100"
-              onClick={() => setMode("edit")}
-              tooltip="Edit"
-            >
-              <PencilEditIcon />
-            </Action>
-          )}
-          <Action onClick={handleCopy} tooltip="Copy">
-            <CopyIcon />
-          </Action>
-        </div>
+        <Action
+          className="opacity-0 transition-opacity group-hover/message:opacity-100"
+          onClick={handleCopy}
+          tooltip="Copy"
+        >
+          <CopyIcon />
+        </Action>
       </Actions>
     );
   }
 
   return (
     <Actions className="-ml-0.5">
-      <Action onClick={handleCopy} tooltip="Copy">
-        <CopyIcon />
-      </Action>
-
       <Action
         data-testid="message-upvote"
         disabled={vote?.isUpvoted}
@@ -168,6 +155,14 @@ export function PureMessageActions({
         tooltip="Downvote Response"
       >
         <ThumbDownIcon />
+      </Action>
+
+      <Action
+        className="opacity-0 transition-opacity group-hover/message:opacity-100"
+        onClick={handleCopy}
+        tooltip="Copy"
+      >
+        <CopyIcon />
       </Action>
     </Actions>
   );

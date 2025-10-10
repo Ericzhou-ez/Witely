@@ -3,7 +3,8 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast as toastFn } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -17,10 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useArtifactSelector } from "@/hooks/use-artifact";
+import {
+  initialArtifactData,
+  useArtifact,
+  useArtifactSelector,
+} from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useMessages } from "@/hooks/use-messages";
+import { getMediaTypeFromFile } from "@/lib/ai/file-compatibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -28,10 +34,10 @@ import type { AppUsage } from "@/lib/usage";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
+import { DragDropWrapper } from "./drag-drop-wrapper";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
-import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 
 export function Chat({
@@ -58,6 +64,7 @@ export function Chat({
 
   const { mutate } = useSWRConfig();
   const { setDataStream } = useDataStream();
+  const { setArtifact } = useArtifact();
 
   const [input, setInput] = useState<string>("");
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
@@ -68,6 +75,12 @@ export function Chat({
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  // Reset artifact state when navigating to a different chat
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally include 'id' to reset the artifact when chat changes
+  useEffect(() => {
+    setArtifact(initialArtifactData);
+  }, [id, setArtifact]);
 
   const {
     messages,
@@ -114,10 +127,7 @@ export function Chat({
         ) {
           setShowCreditCardAlert(true);
         } else {
-          toast({
-            type: "error",
-            description: error.message,
-          });
+          toastFn.error(error.message);
         }
       }
     },
@@ -165,54 +175,143 @@ export function Chat({
     setMessages,
   });
 
+  const handleFilesDropped = useCallback(
+    async (files: File[]) => {
+      const { isMediaTypeCompatible } = await import(
+        "@/lib/ai/file-compatibility"
+      );
+      const { chatModels } = await import("@/lib/ai/models");
+
+      const selectedModel = chatModels.find((m) => m.id === currentModelId);
+
+      if (!selectedModel) {
+        toastFn.error("Selected model not found");
+        return;
+      }
+
+      // Check file compatibility before uploading
+      const incompatibleFiles: string[] = [];
+      const compatibleFiles: File[] = [];
+
+      for (const file of files) {
+        const mediaType = getMediaTypeFromFile(file);
+        if (isMediaTypeCompatible(mediaType as any, selectedModel)) {
+          compatibleFiles.push(file);
+        } else {
+          incompatibleFiles.push(file.name);
+        }
+      }
+
+      // Show error for incompatible files
+      if (incompatibleFiles.length > 0) {
+        const fileList = incompatibleFiles.join(", ");
+        toastFn.error(
+          `Cannot attach ${incompatibleFiles.length === 1 ? "file" : "files"} "${fileList}" - not supported by ${selectedModel.name} ${selectedModel.model}`
+        );
+      }
+
+      // Only upload compatible files
+      if (compatibleFiles.length === 0) {
+        return;
+      }
+
+      // Process files when dropped on the page
+      const uploadFile = async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch("/api/files/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const { url, pathname, contentType } = data;
+
+            return {
+              url,
+              name: pathname,
+              contentType,
+            };
+          }
+          const { error } = await response.json();
+          toastFn.error(error);
+        } catch (_error) {
+          toastFn.error("Failed to upload file, please try again!");
+        }
+      };
+
+      try {
+        const uploadPromises = compatibleFiles.map((file) => uploadFile(file));
+        const uploadedAttachments = await Promise.all(uploadPromises);
+        const successfullyUploadedAttachments = uploadedAttachments.filter(
+          (attachment) => attachment !== undefined
+        );
+
+        setAttachments((currentAttachments) => [
+          ...currentAttachments,
+          ...successfullyUploadedAttachments,
+        ]);
+      } catch (error) {
+        console.error("Error uploading files!", error);
+      }
+    },
+    [currentModelId]
+  );
+
   return (
     <>
-      <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
-        <ChatHeader
-          chatId={id}
-          isReadonly={isReadonly}
-          selectedVisibilityType={initialVisibilityType}
-        />
+      <DragDropWrapper
+        onFilesDropped={handleFilesDropped}
+        selectedModelId={currentModelId}
+      >
+        <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
+          <ChatHeader
+            chatId={id}
+            isReadonly={isReadonly}
+            selectedVisibilityType={initialVisibilityType}
+          />
 
-        <Messages
-          chatId={id}
-          endRef={messagesEndRef}
-          hasSentMessage={hasSentMessage}
-          isArtifactVisible={isArtifactVisible}
-          isReadonly={isReadonly}
-          messages={messages}
-          messagesContainerRef={messagesContainerRef}
-          regenerate={regenerate}
-          scrollToBottom={scrollToBottom}
-          selectedModelId={initialChatModel}
-          setMessages={setMessages}
-          status={status}
-          votes={votes}
-        />
+          <Messages
+            chatId={id}
+            endRef={messagesEndRef}
+            hasSentMessage={hasSentMessage}
+            isArtifactVisible={isArtifactVisible}
+            isReadonly={isReadonly}
+            messages={messages}
+            messagesContainerRef={messagesContainerRef}
+            scrollToBottom={scrollToBottom}
+            selectedModelId={initialChatModel}
+            status={status}
+            votes={votes}
+          />
 
-        <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-3xl gap-2 border-t-0 px-2 md:px-4">
-          {!isReadonly && (
-            <MultimodalInput
-              attachments={attachments}
-              chatId={id}
-              input={input}
-              isAtBottom={isAtBottom}
-              messages={messages}
-              onModelChange={setCurrentModelId}
-              scrollToBottom={scrollToBottom}
-              selectedModelId={currentModelId}
-              selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
-              setAttachments={setAttachments}
-              setInput={setInput}
-              setMessages={setMessages}
-              status={status}
-              stop={stop}
-              usage={usage}
-            />
-          )}
+          <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-3xl gap-2 border-t-0 px-2 md:px-4">
+            {!isReadonly && (
+              <MultimodalInput
+                attachments={attachments}
+                chatId={id}
+                input={input}
+                isAtBottom={isAtBottom}
+                messages={messages}
+                onModelChange={setCurrentModelId}
+                scrollToBottom={scrollToBottom}
+                selectedModelId={currentModelId}
+                selectedVisibilityType={visibilityType}
+                sendMessage={sendMessage}
+                setAttachments={setAttachments}
+                setInput={setInput}
+                setMessages={setMessages}
+                status={status}
+                stop={stop}
+                usage={usage}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      </DragDropWrapper>
 
       <Artifact
         attachments={attachments}

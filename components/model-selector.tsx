@@ -11,15 +11,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import { isModelCompatibleWithAttachments } from "@/lib/ai/file-compatibility";
 import { chatModels } from "@/lib/ai/models";
+import type { Attachment } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CheckCircleFillIcon, ChevronDownIcon } from "./icons";
 
 export function ModelSelector({
   selectedModelId,
   className,
+  attachments = [],
 }: {
   selectedModelId: string;
+  attachments?: Attachment[];
 } & React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
   const [optimisticModelId, setOptimisticModelId] =
@@ -67,14 +71,24 @@ export function ModelSelector({
       >
         {availableChatModels.map((chatModel) => {
           const id = chatModel.id;
+          const isCompatible = isModelCompatibleWithAttachments(
+            id,
+            attachments
+          );
+          const isDisabled = !isCompatible;
 
           return (
             <DropdownMenuItem
               asChild
               data-active={id === optimisticModelId}
               data-testid={`model-selector-item-${id}`}
+              disabled={isDisabled}
               key={id}
               onSelect={() => {
+                if (isDisabled) {
+                  return;
+                }
+
                 setOpen(false);
 
                 startTransition(() => {
@@ -84,7 +98,11 @@ export function ModelSelector({
               }}
             >
               <button
-                className="group/item flex w-full flex-row items-center justify-between gap-2 sm:gap-4"
+                className={cn(
+                  "group/item flex w-full flex-row items-center justify-between gap-2 sm:gap-4",
+                  isDisabled && "cursor-not-allowed opacity-50"
+                )}
+                disabled={isDisabled}
                 type="button"
               >
                 <div className="flex flex-col items-start gap-1">
@@ -92,7 +110,9 @@ export function ModelSelector({
                     {chatModel.name} {chatModel.model}
                   </div>
                   <div className="line-clamp-2 text-muted-foreground text-xs">
-                    {chatModel.description}
+                    {isDisabled
+                      ? "Not compatible with attached files"
+                      : chatModel.description}
                   </div>
                 </div>
 
