@@ -1,5 +1,6 @@
 import "server-only";
 
+import { del } from "@vercel/blob";
 import {
   and,
   asc,
@@ -126,6 +127,27 @@ export async function saveChat({
 export async function deleteChatById({ id }: { id: string }) {
   try {
     await db.delete(vote).where(eq(vote.chatId, id));
+
+    const msgParts = await db
+      .select({ parts: message.parts })
+      .from(message)
+      .where(and(eq(message.chatId, id), eq(message.role, "user")));
+
+    const filesToBeDeleted = msgParts
+      .flatMap((m) => (Array.isArray(m.parts) ? m.parts : []))
+      .filter(
+        (p: any): p is { type: "file"; url: string; name: string } =>
+          p.type === "file"
+      );
+
+    await Promise.all(
+      filesToBeDeleted.map((file) =>
+        del(file.url).catch((err) =>
+          console.error(`Failed to delete blob ${file.name}:`, err)
+        )
+      )
+    );
+
     await db.delete(message).where(eq(message.chatId, id));
     await db.delete(stream).where(eq(stream.chatId, id));
 
