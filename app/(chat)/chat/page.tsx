@@ -5,11 +5,6 @@ import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { generateUUID } from "@/lib/utils";
 
 export default async function Page() {
-  // no more browsing as Guest
-  // if (!session) {
-  //   redirect("/api/auth/guest");
-  // }
-
   const id = generateUUID();
 
   const cookieStore = await cookies();
