@@ -43,6 +43,30 @@ import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
 
+/**
+ * Pure multimodal input component without memoization.
+ * Handles text input, file attachments, model selection, and submission.
+ *
+ * @param {Object} props - Component props
+ * @param {string} props.chatId - The ID of the current chat
+ * @param {string} props.input - Current input text
+ * @param {Dispatch<SetStateAction<string>>} props.setInput - Setter for input text
+ * @param {UseChatHelpers<ChatMessage>["status"]} props.status - Chat status
+ * @param {() => void} props.stop - Function to stop the current generation
+ * @param {Attachment[]} props.attachments - List of attached files
+ * @param {Dispatch<SetStateAction<Attachment[]>>} props.setAttachments - Setter for attachments
+ * @param {UIMessage[]} props.messages - Current messages in the chat
+ * @param {UseChatHelpers<ChatMessage>["setMessages"]} props.setMessages - Setter for messages
+ * @param {UseChatHelpers<ChatMessage>["sendMessage"]} props.sendMessage - Function to send message
+ * @param {string} [props.className] - Optional CSS class
+ * @param {VisibilityType} props.selectedVisibilityType - Selected visibility
+ * @param {string} props.selectedModelId - Selected model ID
+ * @param {(modelId: string) => void} [props.onModelChange] - Optional model change handler
+ * @param {AppUsage} [props.usage] - Usage data
+ * @param {boolean} [props.isAtBottom] - Whether scrolled to bottom
+ * @param {(behavior?: "smooth" | "instant") => void} [props.scrollToBottom] - Scroll to bottom function
+ * @returns {JSX.Element} The rendered component
+ */
 function PureMultimodalInput({
   chatId,
   input,
@@ -228,11 +252,11 @@ function PureMultimodalInput({
           ]);
         }
       } catch (error) {
-        console.error("Error uploading files!", error);
+        toast.error("Failed to upload files");
       } finally {
         setUploadQueue([]);
       }
-    },
+    }, 
     [setAttachments, selectedModelId, attachments.length]
   );
 
@@ -354,6 +378,7 @@ function PureMultimodalInput({
           ) : (
             <PromptInputSubmit
               className="size-8 rounded-full bg-primary text-primary-foreground transition-colors duration-200 hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
+              data-testid="send-button"
               disabled={
                 (!input.trim() && attachments.length === 0) ||
                 uploadQueue.length > 0
@@ -472,6 +497,7 @@ export function PureModelSelectorCompact({
           "flex h-8 items-center gap-2 rounded-lg border-0 bg-background px-2 text-foreground shadow-none transition-colors focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0",
           hasMessages ? "cursor-not-allowed opacity-50" : "hover:bg-accent"
         )}
+        data-testid="model-selector-trigger"
         disabled={hasMessages}
         type="button"
       >

@@ -7,14 +7,47 @@ import {
 } from "./file-compatibility";
 import type { ChatModel } from "./models";
 
-// Maximum number of attachments allowed per message
+/**
+ * File upload utilities for handling attachments in chat messages.
+ * 
+ * This module provides functions to validate files against model compatibility,
+ * size limits, and attachment counts before uploading them to the server.
+ * It integrates with the file compatibility checker and handles upload errors gracefully.
+ * 
+ * @module file-upload
+ * @example
+ * // Example usage in a component
+ * const attachments = await validateAndUploadFiles(selectedFiles, currentModel, existingAttachments.length);
+ * if (attachments.length > 0) {
+ *   // Add to message
+ * }
+ */
+
+/**
+ * Maximum number of attachments allowed per message.
+ * @constant {number}
+ */
 export const MAX_ATTACHMENTS = 8;
 
-// Maximum total size of all attachments (50MB)
+/**
+ * Maximum total size of all attachments in bytes (50MB).
+ * @constant {number}
+ */
 export const MAX_TOTAL_ATTACHMENT_SIZE = 50 * 1024 * 1024;
 
 /**
- * Validates and uploads files, checking compatibility with the selected model
+ * Validates files for compatibility with the selected model, checks limits,
+ * and uploads compatible files to the server.
+ * 
+ * @param {File[]} files - Array of files to validate and upload.
+ * @param {ChatModel} selectedModel - The currently selected chat model to check compatibility against.
+ * @param {number} [currentAttachmentCount=0] - Number of existing attachments in the current message.
+ * @returns {Promise<Attachment[]>} Array of successfully uploaded attachments.
+ * @throws {Error} If upload fails critically, but generally handles errors with toasts.
+ * @example
+ * const model = { name: 'GPT-4', model: 'gpt-4', supportedMediaTypes: ['image/*', 'text/*'] };
+ * const files = [new File(['content'], 'test.txt', { type: 'text/plain' })];
+ * const attachments = await validateAndUploadFiles(files, model);
  */
 export async function validateAndUploadFiles(
   files: File[],
@@ -80,7 +113,13 @@ export async function validateAndUploadFiles(
 }
 
 /**
- * Uploads a single file to the server
+ * Uploads a single file to the server via the upload API.
+ * 
+ * This is an internal function called by validateAndUploadFiles.
+ * 
+ * @param {File} file - The file to upload.
+ * @returns {Promise<Attachment | undefined>} The attachment object if successful, undefined otherwise.
+ * @private
  */
 async function uploadFile(file: File): Promise<Attachment | undefined> {
   const formData = new FormData();
@@ -109,4 +148,6 @@ async function uploadFile(file: File): Promise<Attachment | undefined> {
     console.error("Upload error:", error);
     toast.error("Failed to upload file, please try again!");
   }
+
+  return undefined;
 }

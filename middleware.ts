@@ -1,9 +1,50 @@
+/**
+ * Next.js middleware for handling authentication and routing.
+ * 
+ * This middleware checks for user authentication using NextAuth JWT token.
+ * It redirects unauthenticated users from protected routes to login,
+ * and authenticated users from auth pages to the chat dashboard.
+ * Special handling for /ping endpoint for health checks and /api/auth for NextAuth routes.
+ * 
+ * @file middleware.ts
+ * @author Witely AI Team
+ */
+
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { isDevelopmentEnvironment } from "./lib/constants";
 
-export async function middleware(request: NextRequest) {
+/**
+ * Determines if the pathname requires authentication.
+ * Protected routes: /chat and /dashboard.
+ * 
+ * @param pathname - The pathname to check.
+ * @returns boolean - True if authentication is required.
+ */
+function requiresAuth(pathname: string): boolean {
+  return pathname.startsWith("/chat") || pathname.startsWith("/dashboard");
+}
+
+/**
+ * Determines if the pathname is an authentication route.
+ * Auth routes: /login and /register.
+ * 
+ * @param pathname - The pathname to check.
+ * @returns boolean - True if it's an auth route.
+ */
+function isAuthRoute(pathname: string): boolean {
+  return pathname.startsWith("/login") || pathname.startsWith("/register");
+}
+
+/**
+ * Middleware handler for incoming requests.
+ * 
+ * @param request - The NextRequest object containing the incoming request details.
+ * @returns Promise&lt;NextResponse&gt; - The response to send back, either next(), redirect, or custom response.
+ */
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
+
   /*
    * Playwright starts the dev server and requires a 200 status to
    * begin the tests, so this ensures that the tests can start
@@ -18,18 +59,11 @@ export async function middleware(request: NextRequest) {
     secureCookie: !isDevelopmentEnvironment,
   });
 
-  const isAuthPage =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/register");
-  const isProtectedPage =
-    request.nextUrl.pathname.startsWith("/chat") ||
-    request.nextUrl.pathname.startsWith("/dashboard");
-
-  if (token && isAuthPage) {
+  if (token && isAuthRoute(pathname)) {
     return NextResponse.redirect(new URL("/chat", request.url));
   }
 
-  if (!token && isProtectedPage) {
+  if (!token && requiresAuth(pathname)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -37,13 +71,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (token && ["/login", "/register"].includes(pathname)) {
-    return NextResponse.redirect(new URL("/chat", request.url));
-  }
+  // Removed redundant check for exact /login and /register as it's covered by isAuthRoute
 
   return NextResponse.next();
 }
 
+/**
+ * Configuration for the middleware matcher.
+ * Specifies which paths the middleware should run on, excluding static files and metadata.
+ */
 export const config = {
   matcher: [
     "/",

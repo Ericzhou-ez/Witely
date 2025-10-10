@@ -25,7 +25,26 @@ export type FileCompatibilityError = {
 };
 
 /**
- * Checks if a specific media type is compatible with a given model
+ * Checks if a specific media type is compatible with a given model.
+ *
+ * This function determines compatibility based on the model's capabilities:
+ * - Images (JPEG, PNG, HEIC) require vision capability.
+ * - PDFs require PDF understanding capability.
+ * - Text files (plain, CSV, Markdown) are supported by all models.
+ *
+ * @param mediaType - The MIME type of the file to check.
+ * @param model - The ChatModel instance to verify against.
+ * @returns `true` if the media type is compatible with the model, `false` otherwise.
+ *
+ * @example
+ * import { chatModels } from './models';
+ * const gpt4oModel = chatModels.find(m => m.id === 'gpt-4o');
+ * const isCompatible = isMediaTypeCompatible('image/jpeg', gpt4oModel!);
+ * // Returns true, since GPT-4o has vision capability
+ *
+ * @example
+ * const textCompatible = isMediaTypeCompatible('text/plain', gpt4oModel!);
+ * // Returns true, as all models support text
  */
 export function isMediaTypeCompatible(
   mediaType: MediaType,
@@ -59,8 +78,22 @@ export function isMediaTypeCompatible(
 }
 
 /**
- * Validates if all file attachments are compatible with the selected model
- * Returns an array of incompatible files with error details
+ * Validates if all file attachments are compatible with the selected model.
+ *
+ * Iterates through the provided files and checks each against the model's capabilities.
+ * Returns a list of errors for incompatible files, including details on why they are incompatible.
+ *
+ * @param files - Array of FileAttachment objects to validate.
+ * @param modelId - The ID of the model to check compatibility against.
+ * @returns An array of FileCompatibilityError objects for incompatible files. Empty array if all are compatible.
+ *
+ * @example
+ * const files = [
+ *   { name: 'image.jpg', url: 'url1', mediaType: 'image/jpeg' },
+ *   { name: 'doc.txt', url: 'url2', mediaType: 'text/plain' }
+ * ];
+ * const errors = validateFileCompatibility(files, 'gpt-4o');
+ * // Returns [] if GPT-4o supports images, or error for image if not
  */
 export function validateFileCompatibility(
   files: FileAttachment[],
@@ -108,7 +141,18 @@ export function validateFileCompatibility(
 }
 
 /**
- * Generates a user-friendly error message for incompatible files
+ * Generates a user-friendly error message for incompatible files.
+ *
+ * Creates a readable message explaining which files are incompatible and why,
+ * suitable for displaying to users in the UI.
+ *
+ * @param errors - Array of FileCompatibilityError objects.
+ * @returns A string message describing the incompatibilities. Empty string if no errors.
+ *
+ * @example
+ * const errors = [{ fileName: 'image.jpg', mediaType: 'image/jpeg', reason: 'No vision', modelName: 'GPT-3.5' }];
+ * const message = generateCompatibilityErrorMessage(errors);
+ * // Returns: '"image.jpg" is not compatible with GPT-3.5. This model does not support image files.'
  */
 export function generateCompatibilityErrorMessage(
   errors: FileCompatibilityError[]
@@ -128,7 +172,16 @@ export function generateCompatibilityErrorMessage(
 }
 
 /**
- * Gets the list of supported file types for a given model
+ * Gets the list of supported file types for a given model.
+ *
+ * Returns file extensions and a description of supported formats based on the model's capabilities.
+ *
+ * @param modelId - The ID of the model to query.
+ * @returns An object with `extensions` (array of uppercase extensions) and `description` (string).
+ *
+ * @example
+ * const supported = getSupportedFileTypes('gpt-4o');
+ * // Returns { extensions: ['TXT', 'CSV', 'MD', 'JPG', 'PNG', 'HEIC', 'PDF'], description: 'Images, PDFs, Text files' }
  */
 export function getSupportedFileTypes(modelId: string): {
   extensions: string[];
@@ -167,7 +220,18 @@ export function getSupportedFileTypes(modelId: string): {
 }
 
 /**
- * Checks if a model is compatible with all given attachments
+ * Checks if a model is compatible with all given attachments.
+ *
+ * Quick check to see if all attachments' content types are supported by the model.
+ *
+ * @param modelId - The ID of the model.
+ * @param attachments - Array of objects with contentType property.
+ * @returns `true` if all attachments are compatible, `false` otherwise.
+ *
+ * @example
+ * const attachments = [{ contentType: 'text/plain' }, { contentType: 'image/jpeg' }];
+ * const compatible = isModelCompatibleWithAttachments('gpt-4o', attachments);
+ * // true if model supports both
  */
 export function isModelCompatibleWithAttachments(
   modelId: string,
@@ -189,7 +253,18 @@ export function isModelCompatibleWithAttachments(
 }
 
 /**
- * Gets the list of models that are compatible with given attachments
+ * Gets the list of models that are compatible with given attachments.
+ *
+ * Filters the available models to those that support all provided attachments.
+ *
+ * @param attachments - Array of attachment objects with contentType.
+ * @param availableModels - List of ChatModel to filter from.
+ * @returns Filtered array of compatible ChatModel instances.
+ *
+ * @example
+ * const attachments = [{ contentType: 'application/pdf' }];
+ * const compatibleModels = getCompatibleModels(attachments, chatModels);
+ * // Returns models that have pdf_understanding: true
  */
 export function getCompatibleModels(
   attachments: Array<{ contentType: string }>,
@@ -207,6 +282,19 @@ export function getCompatibleModels(
   );
 }
 
+/**
+ * Normalizes the MIME type from a File object to a standard MediaType.
+ *
+ * Handles common variations like 'image/jpg' to 'image/jpeg', and CSV types.
+ *
+ * @param file - The File object to extract type from.
+ * @returns A normalized MediaType string, or the original type if unknown.
+ *
+ * @example
+ * const file = new File(['content'], 'test.jpg', { type: 'image/jpg' });
+ * const mediaType = getMediaTypeFromFile(file);
+ * // Returns 'image/jpeg'
+ */
 export const getMediaTypeFromFile = (file: File): string => {
   const type = file.type.toLowerCase();
   if (type === "image/jpeg" || type === "image/jpg") {

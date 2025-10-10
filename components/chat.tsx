@@ -39,6 +39,19 @@ import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import type { VisibilityType } from "./visibility-selector";
 
+/**
+ * Main chat component that handles the conversation interface, including messages, file uploads, and AI interactions.
+ *
+ * @param {Object} props - The component props.
+ * @param {string} props.id - Unique identifier for the chat session.
+ * @param {import("@/lib/types").ChatMessage[]} props.initialMessages - Array of initial messages to populate the chat.
+ * @param {string} props.initialChatModel - The ID of the initial AI model to use.
+ * @param {import("./visibility-selector").VisibilityType} props.initialVisibilityType - Initial visibility setting (public/private).
+ * @param {boolean} props.isReadonly - Flag to render the chat in read-only mode.
+ * @param {boolean} props.autoResume - Whether to automatically resume interrupted streams.
+ * @param {import("@/lib/usage").AppUsage} [props.initialLastContext] - Optional initial usage statistics.
+ * @returns {JSX.Element} The rendered chat UI component.
+ */
 export function Chat({
   id,
   initialMessages,
@@ -71,6 +84,10 @@ export function Chat({
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
 
+  // Constants for better testability and readability
+  const THROTTLE_DELAY = 100;
+  const CREDIT_CARD_ERROR_MSG = "AI Gateway requires a valid credit card";
+
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
@@ -92,7 +109,7 @@ export function Chat({
   } = useChat<ChatMessage>({
     id,
     messages: initialMessages,
-    experimental_throttle: 100,
+    experimental_throttle: THROTTLE_DELAY,
     generateId: generateUUID,
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -109,20 +126,23 @@ export function Chat({
         };
       },
     }),
+    // Handle incoming data parts from the AI stream, update data stream and usage stats
     onData: (dataPart) => {
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       if (dataPart.type === "data-usage") {
         setUsage(dataPart.data);
       }
     },
+    // Invalidate and refetch chat history cache after stream completion
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },
+    // Handle errors from the chat SDK, including specific cases like credit card requirements
     onError: (error) => {
       if (error instanceof ChatSDKError) {
         // Check if it's a credit card error
         if (
-          error.message?.includes("AI Gateway requires a valid credit card")
+          error.message?.includes(CREDIT_CARD_ERROR_MSG)
         ) {
           setShowCreditCardAlert(true);
         } else {
@@ -200,7 +220,9 @@ export function Chat({
           ]);
         }
       } catch (error) {
-        console.error("Error uploading files!", error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred while uploading files.';
+        toastFn.error(`Failed to upload files: ${errorMessage}`);
+        console.error('File upload error:', error);
       }
     },
     [currentModelId, attachments.length]

@@ -147,7 +147,9 @@ async function fetchTextFileContent(file: {
 async function processUIMessagesWithTextFiles(
   uiMessages: ChatMessage[]
 ): Promise<ChatMessage[]> {
-  return await Promise.all(
+  const fileCache = new Map<string, Promise<string>>();
+
+return await Promise.all(
     uiMessages.map(async (msg) => {
       if (msg.role !== "user" || !msg.parts) {
         return msg;
@@ -189,7 +191,13 @@ async function processUIMessagesWithTextFiles(
       // Fetch text file contents and append to message
       if (textFiles.length > 0) {
         const textFileContents = await Promise.all(
-          textFiles.map((file) => fetchTextFileContent(file))
+          textFiles.map((file) => {
+            const key = file.url;
+            if (!fileCache.has(key)) {
+              fileCache.set(key, fetchTextFileContent(file));
+            }
+            return fileCache.get(key);
+          })
         );
 
         const appendedText = textFileContents.join("");
@@ -267,6 +275,14 @@ function convertToGatewayModelMessages(
   });
 }
 
+/**
+ * Handles the creation of a new chat message.
+ * Validates input, processes files, checks entitlements, saves messages,
+ * and streams the AI response using the selected model.
+ *
+ * @param {Request} request - The HTTP request containing the chat data in JSON body.
+ * @returns {Promise&lt;Response&gt;} A streaming Response with SSE events or an error Response.
+ */
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
