@@ -52,7 +52,7 @@ export type UIArtifact = {
   };
 };
 
-function PureArtifact({
+/**\n * PureArtifact Component\n *\n * Renders the artifact interface for viewing and editing documents of various kinds (text, code, image, sheet).\n * Handles versioning, content saving, and integration with chat messages.\n *\n * @param {object} props - Component props\n * @param {string} props.chatId - The ID of the current chat\n * @param {string} props.input - Current input text\n * @param {Dispatch<SetStateAction<string>>} props.setInput - Setter for input text\n * @param {UseChatHelpers<ChatMessage>[\"status\"]} props.status - Chat status\n * @param {UseChatHelpers<ChatMessage>[\"stop\"]} props.stop - Function to stop generation\n * @param {Attachment[]} props.attachments - List of attachments\n * @param {Dispatch<SetStateAction<Attachment[]>>} props.setAttachments - Setter for attachments\n * @param {UseChatHelpers<ChatMessage>[\"sendMessage\"]} props.sendMessage - Function to send message\n * @param {ChatMessage[]} props.messages - List of chat messages\n * @param {UseChatHelpers<ChatMessage>[\"setMessages\"]} props.setMessages - Setter for messages\n * @param {UseChatHelpers<ChatMessage>[\"regenerate\"]} props.regenerate - Function to regenerate\n * @param {Vote[] | undefined} props.votes - List of votes\n * @param {boolean} props.isReadonly - Whether the artifact is read-only\n * @param {VisibilityType} props.selectedVisibilityType - Selected visibility type\n * @param {string} props.selectedModelId - Selected model ID\n */\nfunction PureArtifact({
   chatId,
   input,
   setInput,
@@ -518,7 +518,7 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   if (prevProps.input !== nextProps.input) {
     return false;
   }
-  if (!equal(prevProps.messages, nextProps.messages.length)) {
+  if (prevProps.messages.length !== nextProps.messages.length) {
     return false;
   }
   if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {

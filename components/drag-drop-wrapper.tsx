@@ -3,6 +3,20 @@
 import { useCallback, useRef, useState } from "react";
 import { FileDropOverlay } from "./file-drop-overlay";
 
+/**
+ * A wrapper component that enables drag-and-drop file upload functionality.
+ * It displays an overlay when files are being dragged over the area and handles
+ * the drop event by calling the provided callback with the dropped files.
+ *
+ * This component uses a drag counter to accurately detect when dragging leaves
+ * the entire area, preventing premature hiding of the overlay.
+ *
+ * @param {Object} props - The component props.
+ * @param {React.ReactNode} props.children - The content to be wrapped inside the drag-drop area.
+ * @param {string} props.selectedModelId - The ID of the currently selected AI model, passed to the overlay.
+ * @param {(files: File[]) => Promise<void>} props.onFilesDropped - Asynchronous callback invoked when files are successfully dropped. Receives an array of File objects.
+ * @returns {JSX.Element} The wrapped content with drag-drop handlers.
+ */
 export function DragDropWrapper({
   children,
   selectedModelId,
@@ -15,7 +29,7 @@ export function DragDropWrapper({
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     dragCounter.current += 1;
@@ -24,7 +38,7 @@ export function DragDropWrapper({
     }
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     dragCounter.current -= 1;
@@ -33,13 +47,13 @@ export function DragDropWrapper({
     }
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
   }, []);
 
   const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
+    async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
@@ -56,7 +70,8 @@ export function DragDropWrapper({
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Drag-drop requires event handlers on the containing div
     <div
-      className="relative h-full w-full"
+      data-testid=\"drag-drop-wrapper\"
+      className=\"relative h-full w-full\"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -70,3 +85,4 @@ export function DragDropWrapper({
     </div>
   );
 }
+"

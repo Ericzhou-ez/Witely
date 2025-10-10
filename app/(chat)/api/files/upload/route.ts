@@ -1,9 +1,12 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
 import { auth } from "@/app/(auth)/auth";
 
+/**
+ * Supported file types and their maximum sizes in bytes.
+ * Labels are for user-friendly display.
+ */
 const SUPPORTED_FILE_TYPES = {
   // Images
   "image/jpeg": { maxSize: 5 * 1024 * 1024, label: "JPEG" },
@@ -49,14 +52,72 @@ const FileSchema = z.object({
   ),
 });
 
+/**
+ * Sanitizes a filename to prevent path traversal and invalid characters.
+ * Replaces invalid characters with underscores, limits length to 100 chars,
+ * preserving extension if possible.
+ * @param filename - Original filename
+ * @returns Sanitized filename
+ */
+function sanitizeFilename(filename: string): string {
+  if (!filename || typeof filename !== 'string') {
+    return 'unnamed_file';
+  }
+
+  // Remove path components
+  const basename = filename.split(/[\\/]/).pop() || filename;
+
+  // Replace invalid filename characters (Windows + others)
+  let sanitized = basename.replace(/[<>:"/\\|?*]/g, '_');
+
+  // Replace other special characters
+  sanitized = sanitized.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+  // Remove leading and trailing underscores/dots
+  sanitized = sanitized.replace(/^[_.-]+|[_.-]+$/g, '');
+
+  // Limit length, preserving extension
+  if (sanitized.length > 100) {
+    const dotIndex = sanitized.lastIndexOf('.');
+    if (dotIndex > 0 && dotIndex < 90) {  // Ensure extension is preserved
+      const namePart = sanitized.substring(0, 100 - (sanitized.length - dotIndex));
+      sanitized = namePart + sanitized.substring(dotIndex);
+    } else {
+      sanitized = sanitized.substring(0, 100);
+    }
+  }
+
+  if (!sanitized) {
+    sanitized = 'unnamed_file';
+  }
+
+  return sanitized;
+}
+
+/**
+ * Validates the uploaded file against supported types and size limits.
+ * @param file - The Blob file to validate
+ * @returns Validation result
+ */
+function validateFile(file: Blob): z.SafeParseReturnType<typeof FileSchema> {
+  return FileSchema.safeParse({ file });
+}
+
+/**
+ * Handles file upload for chat attachments.
+ * Authenticates the user, validates the file, sanitizes the name,
+ * and uploads to Vercel Blob.
+ * @param request - The incoming multipart form request with 'file' field
+ * @returns NextResponse with JSON { url, ... } on success, or error
+ */
 export async function POST(request: Request) {
   const session = await auth();
 
-  if (!session) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (request.body === null) {
+  if (!request.body) {
     return NextResponse.json(
       { error: "Request body is empty" },
       { status: 400 }
@@ -65,64 +126,81 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as Blob;
+    const fileBlob = formData.get("file") as Blob;
 
-    if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    if (!fileBlob || fileBlob.size === 0) {
+      return NextResponse.json({ error: "No valid file uploaded" }, { status: 400 });
     }
 
-    const validatedFile = FileSchema.safeParse({ file });
+    // Get filename; fallback if not available
+    let filename = 'unnamed_file';
+    const fileEntry = formData.get("file");
+    if (fileEntry instanceof File) {
+      filename = fileEntry.name;
+    } else if (typeof fileEntry === 'string') {
+      filename = fileEntry;
+    }
 
-    if (!validatedFile.success) {
-      const errorMessage = validatedFile.error.errors
-        .map((error) => error.message)
+    const validated = validateFile(fileBlob);
+
+    if (!validated.success) {
+      const errorMessage = validated.error.errors
+        .map((err) => err.message)
         .join(", ");
-
+      console.error("File validation error:", {
+        userId: session.user.id,
+        filename,
+        errors: validated.error.errors,
+      });
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    // Get filename from formData since Blob doesn't have name property
-    const filename = (formData.get("file") as File).name;
+    const sanitizedFilename = sanitizeFilename(filename);
 
-    if (!filename) {
+    if (!sanitizedFilename) {
       return NextResponse.json(
-        { error: "File name is required" },
+        { error: "Invalid filename" },
         { status: 400 }
       );
     }
 
-    // Sanitize filename to prevent path traversal
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileBuffer = await file.arrayBuffer();
+    const fileBuffer = await fileBlob.arrayBuffer();
+
+    const blobPath = `${session.user.id}/${Date.now()}-${sanitizedFilename}`;
 
     try {
-      const data = await put(
-        `${session.user?.id}/${Date.now()}-${sanitizedFilename}`,
-        fileBuffer,
-        {
-          access: "public",
-        }
-      );
+      const data = await put(blobPath, fileBuffer, {
+        access: "public",
+      });
+
+      console.log("File uploaded successfully:", {
+        userId: session.user.id,
+        filename: sanitizedFilename,
+        url: data.url,
+      });
 
       return NextResponse.json(data);
-    } catch (error) {
-      console.error("Blob upload error:", error);
+    } catch (uploadError) {
+      console.error("Blob upload error:", {
+        userId: session.user.id,
+        filename: sanitizedFilename,
+        error: uploadError instanceof Error ? uploadError.message : 'Unknown upload error',
+      });
       return NextResponse.json(
         {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Upload failed due to server error",
+          error: "Upload failed due to server error",
         },
         { status: 500 }
       );
     }
-  } catch (error) {
-    console.error("Request processing error:", error);
+  } catch (processError) {
+    console.error("Request processing error:", {
+      userId: session?.user?.id,
+      error: processError instanceof Error ? processError.message : 'Unknown processing error',
+    });
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to process request",
+        error: "Failed to process request",
       },
       { status: 500 }
     );

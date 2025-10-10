@@ -6,6 +6,12 @@ import { CrossSmallIcon } from "./icons";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
+/**
+ * Returns an appropriate icon component based on the file's content type.
+ *
+ * @param {string} contentType - The MIME type of the file.
+ * @returns {JSX.Element} A React component representing the file icon.
+ */
 export const getFileIcon = (contentType: string) => {
   if (contentType.includes("pdf")) {
     return (
@@ -36,16 +42,35 @@ export const getFileIcon = (contentType: string) => {
   );
 };
 
+/**
+ * Truncates a filename to a specified maximum length while preserving the file extension.
+ *
+ * @param {string} name - The original filename.
+ * @param {number} [maxLength=20] - The maximum length for the truncated name.
+ * @returns {string} The truncated filename.
+ */
 const truncateFileName = (name: string, maxLength = 20) => {
   if (name.length <= maxLength) {
     return name;
   }
   const extension = name.split(".").pop() || "";
   const nameWithoutExt = name.substring(0, name.lastIndexOf("."));
-  const truncated = `${nameWithoutExt.substring(0, maxLength - extension.length - 4)}`;
-  return `${truncated}...`;
+  const maxNameLength = maxLength - 3 - (extension ? extension.length + 1 : 0);
+  const truncatedName = nameWithoutExt.substring(0, Math.max(0, maxNameLength));
+  const truncated = `${truncatedName}${truncatedName.length < nameWithoutExt.length ? "..." : ""}${extension ? `.${extension}` : ""}`;
+  return truncated;
 };
 
+/**
+ * A component that renders a preview of an attachment file, supporting images and other file types with icons.
+ * Displays uploading state and provides an option to remove the attachment.
+ *
+ * @param {Object} props - The component props.
+ * @param {Attachment} props.attachment - The attachment to preview.
+ * @param {boolean} [props.isUploading=false] - Indicates if the attachment is being uploaded.
+ * @param {() => void} [props.onRemove] - Optional callback invoked when the remove button is clicked.
+ * @returns {JSX.Element} The rendered attachment preview.
+ */
 export const PreviewAttachment = ({
   attachment,
   isUploading = false,
@@ -70,17 +95,18 @@ export const PreviewAttachment = ({
         <Image
           alt={name ?? "An image attachment"}
           className="size-full object-cover"
+          data-testid="attachment-image"
           height={96}
           src={url}
           width={96}
         />
       ) : (
-        <div className="flex size-full items-center justify-center gap-2 p-3">
+        <div className="flex size-full items-center justify-center gap-2 p-3" data-testid="file-info">
           {getFileIcon(contentType)}
           <div className="w-full truncate text-center font-medium text-sm">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="truncate">{truncateFileName(name)}</span>
+                <span className="truncate" data-testid="attachment-name">{truncateFileName(name)}</span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>{name}</p>
@@ -91,14 +117,15 @@ export const PreviewAttachment = ({
       )}
 
       {isUploading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <Loader size={20} />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50" data-testid="uploading-overlay">
+          <Loader size={20} data-testid="uploading-loader" />
         </div>
       )}
 
       {onRemove && !isUploading && (
         <Button
           className="absolute top-0.5 right-0.5 size-3 rounded-full p-0 opacity-0 transition-opacity group-hover:opacity-100"
+          data-testid="remove-button"
           onClick={onRemove}
           size="sm"
           variant={"outline"}
