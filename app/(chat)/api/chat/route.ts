@@ -103,7 +103,11 @@ export function getStreamContext() {
 /**
  * Fetches text file content from URL with timeout handling
  */
-async function fetchTextFileContent(file: any): Promise<string> {
+async function fetchTextFileContent(file: {
+  name: string;
+  url: string;
+  mediaType: string;
+}): Promise<string> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
@@ -122,6 +126,13 @@ async function fetchTextFileContent(file: any): Promise<string> {
     }
 
     const content = await response.text();
+
+    // Check if content is too large (max 0.5MB for text files)
+    const maxSize = 0.5 * 1024 * 1024;
+    if (content.length > maxSize) {
+      return `\n\n[File Upload: ${file.name} (${file.mediaType}) - File too large (${Math.round(content.length / 1024)}KB)]`;
+    }
+
     return `\n\n[File Upload: ${file.name} (${file.mediaType})]\n${content}`;
   } catch (error) {
     console.error(`Error fetching ${file.name}:`, error);
@@ -142,13 +153,20 @@ async function processUIMessagesWithTextFiles(
         return msg;
       }
 
-      const textFiles: any[] = [];
-      const nonTextParts: any[] = [];
+      type FilePartWithUrl = {
+        type: "file";
+        name: string;
+        url: string;
+        mediaType: string;
+      };
+
+      const textFiles: FilePartWithUrl[] = [];
+      const nonTextParts: ChatMessage["parts"] = [];
 
       // Separate text files from other parts
       for (const part of msg.parts) {
         if (part.type === "file") {
-          const filePart = part as any;
+          const filePart = part as FilePartWithUrl;
           const mediaType = filePart.mediaType;
           const isTextFile =
             mediaType === "text/plain" ||
@@ -179,10 +197,13 @@ async function processUIMessagesWithTextFiles(
         // Find existing text part or create new one
         const textPartIndex = nonTextParts.findIndex((p) => p.type === "text");
         if (textPartIndex >= 0) {
-          nonTextParts[textPartIndex] = {
-            ...nonTextParts[textPartIndex],
-            text: nonTextParts[textPartIndex].text + appendedText,
-          };
+          const existingPart = nonTextParts[textPartIndex];
+          if (existingPart.type === "text") {
+            nonTextParts[textPartIndex] = {
+              ...existingPart,
+              text: existingPart.text + appendedText,
+            };
+          }
         } else {
           nonTextParts.push({
             type: "text",
@@ -213,15 +234,27 @@ function convertToGatewayModelMessages(
     if (msg.role === "user" && msg.content && Array.isArray(msg.content)) {
       return {
         ...msg,
-        content: msg.content.map((part: any) => {
+        content: msg.content.map((part) => {
           // Convert image files to Gateway AI format
-          if (part.type === "file" && part.url) {
-            const mediaType = part.mimeType || part.mediaType;
+          if (
+            part.type === "file" &&
+            typeof part === "object" &&
+            "url" in part &&
+            part.url
+          ) {
+            const filePart = part as {
+              type: "file";
+              url: string;
+              name?: string;
+              mimeType?: string;
+              mediaType?: string;
+            };
+            const mediaType = filePart.mimeType || filePart.mediaType;
             if (mediaType?.startsWith("image/")) {
               return {
-                type: "file",
-                data: part.url,
-                filename: part.name,
+                type: "file" as const,
+                data: filePart.url,
+                filename: filePart.name,
                 mediaType,
               };
             }

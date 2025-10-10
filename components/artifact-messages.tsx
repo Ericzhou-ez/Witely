@@ -24,8 +24,6 @@ function PureArtifactMessages({
   status,
   votes,
   messages,
-  setMessages,
-  regenerate,
   isReadonly,
 }: ArtifactMessagesProps) {
   const {
@@ -50,11 +48,9 @@ function PureArtifactMessages({
           isReadonly={isReadonly}
           key={message.id}
           message={message}
-          regenerate={regenerate}
           requiresScrollPadding={
             hasSentMessage && index === messages.length - 1
           }
-          setMessages={setMessages}
           vote={
             votes
               ? votes.find((vote) => vote.messageId === message.id)

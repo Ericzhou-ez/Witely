@@ -57,7 +57,10 @@ export async function POST(request: Request) {
   }
 
   if (request.body === null) {
-    return new Response("Request body is empty", { status: 400 });
+    return NextResponse.json(
+      { error: "Request body is empty" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -80,20 +83,47 @@ export async function POST(request: Request) {
 
     // Get filename from formData since Blob doesn't have name property
     const filename = (formData.get("file") as File).name;
+
+    if (!filename) {
+      return NextResponse.json(
+        { error: "File name is required" },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize filename to prevent path traversal
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileBuffer = await file.arrayBuffer();
 
     try {
-      const data = await put(`${filename}`, fileBuffer, {
-        access: "public",
-      });
+      const data = await put(
+        `${session.user?.id}/${Date.now()}-${sanitizedFilename}`,
+        fileBuffer,
+        {
+          access: "public",
+        }
+      );
 
       return NextResponse.json(data);
-    } catch (_error) {
-      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    } catch (error) {
+      console.error("Blob upload error:", error);
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Upload failed due to server error",
+        },
+        { status: 500 }
+      );
     }
-  } catch (_error) {
+  } catch (error) {
+    console.error("Request processing error:", error);
     return NextResponse.json(
-      { error: "Failed to process request" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to process request",
+      },
       { status: 500 }
     );
   }

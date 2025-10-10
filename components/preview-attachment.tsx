@@ -27,7 +27,12 @@ export const getFileIcon = (contentType: string) => {
     );
   }
   return (
-    <Image alt="File icon" height={25} src="/icons/file-icon.svg" width={25} />
+    <Image
+      alt="File icon"
+      height={25}
+      src="/icons/folder-icon.svg"
+      width={25}
+    />
   );
 };
 

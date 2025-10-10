@@ -26,7 +26,6 @@ import {
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useMessages } from "@/hooks/use-messages";
-import { getMediaTypeFromFile } from "@/lib/ai/file-compatibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -177,9 +176,7 @@ export function Chat({
 
   const handleFilesDropped = useCallback(
     async (files: File[]) => {
-      const { isMediaTypeCompatible } = await import(
-        "@/lib/ai/file-compatibility"
-      );
+      const { validateAndUploadFiles } = await import("@/lib/ai/file-upload");
       const { chatModels } = await import("@/lib/ai/models");
 
       const selectedModel = chatModels.find((m) => m.id === currentModelId);
@@ -189,76 +186,24 @@ export function Chat({
         return;
       }
 
-      // Check file compatibility before uploading
-      const incompatibleFiles: string[] = [];
-      const compatibleFiles: File[] = [];
-
-      for (const file of files) {
-        const mediaType = getMediaTypeFromFile(file);
-        if (isMediaTypeCompatible(mediaType as any, selectedModel)) {
-          compatibleFiles.push(file);
-        } else {
-          incompatibleFiles.push(file.name);
-        }
-      }
-
-      // Show error for incompatible files
-      if (incompatibleFiles.length > 0) {
-        const fileList = incompatibleFiles.join(", ");
-        toastFn.error(
-          `Cannot attach ${incompatibleFiles.length === 1 ? "file" : "files"} "${fileList}" - not supported by ${selectedModel.name} ${selectedModel.model}`
-        );
-      }
-
-      // Only upload compatible files
-      if (compatibleFiles.length === 0) {
-        return;
-      }
-
-      // Process files when dropped on the page
-      const uploadFile = async (file: File) => {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-          const response = await fetch("/api/files/upload", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            const { url, pathname, contentType } = data;
-
-            return {
-              url,
-              name: pathname,
-              contentType,
-            };
-          }
-          const { error } = await response.json();
-          toastFn.error(error);
-        } catch (_error) {
-          toastFn.error("Failed to upload file, please try again!");
-        }
-      };
-
       try {
-        const uploadPromises = compatibleFiles.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
+        const uploadedAttachments = await validateAndUploadFiles(
+          files,
+          selectedModel,
+          attachments.length
         );
 
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
+        if (uploadedAttachments.length > 0) {
+          setAttachments((currentAttachments) => [
+            ...currentAttachments,
+            ...uploadedAttachments,
+          ]);
+        }
       } catch (error) {
         console.error("Error uploading files!", error);
       }
     },
-    [currentModelId]
+    [currentModelId, attachments.length]
   );
 
   return (

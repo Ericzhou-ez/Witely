@@ -121,18 +121,28 @@ const PurePreviewMessage = ({
                       className="flex flex-row gap-2"
                       data-testid={"message-attachments"}
                     >
-                      {attachmentsFromMessage.map((attachment) => (
-                        <PreviewAttachment
-                          attachment={{
-                            name: (attachment as any).name ?? "file",
-                            contentType:
-                              (attachment as any).mediaType ??
-                              "application/octet-stream",
-                            url: (attachment as any).url ?? "",
-                          }}
-                          key={(attachment as any).url}
-                        />
-                      ))}
+                      {attachmentsFromMessage.map((attachment) => {
+                        const fileAttachment = attachment as {
+                          name?: string;
+                          mediaType?: string;
+                          url?: string;
+                        };
+                        return (
+                          <PreviewAttachment
+                            attachment={{
+                              name: fileAttachment.name ?? "file",
+                              contentType:
+                                fileAttachment.mediaType ??
+                                "application/octet-stream",
+                              url: fileAttachment.url ?? "",
+                            }}
+                            key={
+                              fileAttachment.url ??
+                              `attachment-${Math.random()}`
+                            }
+                          />
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -278,7 +288,7 @@ export const PreviewMessage = memo(
       return false;
     }
 
-    return false;
+    return true;
   }
 );
 

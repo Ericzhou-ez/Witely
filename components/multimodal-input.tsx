@@ -21,11 +21,7 @@ import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { saveChatModelAsCookie } from "@/app/(chat)/actions";
 import { SelectItem } from "@/components/ui/select";
-import {
-  getMediaTypeFromFile,
-  isModelCompatibleWithAttachments,
-  type MediaType,
-} from "@/lib/ai/file-compatibility";
+import { isModelCompatibleWithAttachments } from "@/lib/ai/file-compatibility";
 import { chatModels } from "@/lib/ai/models";
 import { myProvider } from "@/lib/ai/providers";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -188,32 +184,7 @@ function PureMultimodalInput({
     resetHeight,
   ]);
 
-  const uploadFile = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
-        return {
-          url,
-          name: pathname,
-          contentType,
-        };
-      }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (_error) {
-      toast.error("Failed to upload file, please try again!");
-    }
-  }, []);
+  // Note: uploadFile utility is now imported from shared module
 
   const _modelResolver = useMemo(() => {
     return myProvider.languageModel(selectedModelId);
@@ -230,9 +201,8 @@ function PureMultimodalInput({
     async (event: ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
 
-      // Import compatibility functions
-      const { isMediaTypeCompatible: checkMediaTypeCompatibility } =
-        await import("@/lib/ai/file-compatibility");
+      // Import dependencies
+      const { validateAndUploadFiles } = await import("@/lib/ai/file-upload");
       const { chatModels: allChatModels } = await import("@/lib/ai/models");
 
       const selectedModel = allChatModels.find((m) => m.id === selectedModelId);
@@ -242,54 +212,28 @@ function PureMultimodalInput({
         return;
       }
 
-      // Check file compatibility before uploading
-      const incompatibleFiles: string[] = [];
-      const compatibleFiles: File[] = [];
-
-      for (const file of files) {
-        const mediaType = getMediaTypeFromFile(file);
-        if (
-          checkMediaTypeCompatibility(mediaType as MediaType, selectedModel)
-        ) {
-          compatibleFiles.push(file);
-        } else {
-          incompatibleFiles.push(file.name);
-        }
-      }
-
-      // Show error for incompatible files
-      if (incompatibleFiles.length > 0) {
-        const fileList = incompatibleFiles.join(", ");
-        toast.error(
-          `Cannot attach ${incompatibleFiles.length === 1 ? "file" : "files"} "${fileList}" - not supported by ${selectedModel.name} ${selectedModel.model}`
-        );
-      }
-
-      // Only upload compatible files
-      if (compatibleFiles.length === 0) {
-        return;
-      }
-
-      setUploadQueue(compatibleFiles.map((file) => file.name));
+      setUploadQueue(files.map((file) => file.name));
 
       try {
-        const uploadPromises = compatibleFiles.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
+        const uploadedAttachments = await validateAndUploadFiles(
+          files,
+          selectedModel,
+          attachments.length
         );
 
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
+        if (uploadedAttachments.length > 0) {
+          setAttachments((currentAttachments) => [
+            ...currentAttachments,
+            ...uploadedAttachments,
+          ]);
+        }
       } catch (error) {
         console.error("Error uploading files!", error);
       } finally {
         setUploadQueue([]);
       }
     },
-    [setAttachments, uploadFile, selectedModelId]
+    [setAttachments, selectedModelId, attachments.length]
   );
 
   return (
