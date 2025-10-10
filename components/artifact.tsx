@@ -298,7 +298,7 @@ function PureArtifact({
                   damping: 30,
                 },
               }}
-              className="relative h-dvh w-[400px] shrink-0 bg-muted dark:bg-background"
+              className="relative h-dvh w-[400px] shrink-0 bg-background dark:bg-muted"
               exit={{
                 opacity: 0,
                 x: 0,
@@ -318,7 +318,7 @@ function PureArtifact({
                 )}
               </AnimatePresence>
 
-              <div className="flex h-full flex-col items-center justify-between">
+              <div className="flex h-full flex-col">
                 <ArtifactMessages
                   artifactStatus={artifact.status}
                   chatId={chatId}
@@ -330,7 +330,7 @@ function PureArtifact({
                   votes={votes}
                 />
 
-                <div className="relative flex w-full flex-row items-end gap-2 px-4 pb-4">
+                <div className="relative flex shrink-0 flex-row items-end gap-2 bg-transparent px-4">
                   <MultimodalInput
                     attachments={attachments}
                     chatId={chatId}
