@@ -61,6 +61,7 @@ function PureMultimodalInput({
   className,
   selectedVisibilityType,
   selectedModelId,
+  onModelChange,
   usage,
   isAtBottom,
   scrollToBottom,
@@ -399,6 +400,7 @@ function PureMultimodalInput({
             <ModelSelectorCompact
               attachments={attachments}
               messages={messages}
+              onModelChange={onModelChange}
               selectedModelId={selectedModelId}
             />
           </PromptInputTools>
