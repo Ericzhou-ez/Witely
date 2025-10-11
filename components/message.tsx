@@ -290,7 +290,7 @@ export const PreviewMessage = memo(
       return false;
     }
 
-    return equal(prevProps, nextProps);
+    return false;
   }
 );
 

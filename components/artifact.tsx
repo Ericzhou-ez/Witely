@@ -298,7 +298,7 @@ function PureArtifact({
                   damping: 30,
                 },
               }}
-              className="relative h-dvh w-[400px] shrink-0 bg-background dark:bg-muted"
+              className="relative h-dvh w-[400px] shrink-0 bg-background"
               exit={{
                 opacity: 0,
                 x: 0,
