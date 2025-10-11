@@ -137,7 +137,7 @@ export async function deleteChatById({ id }: { id: string }) {
       .flatMap((m) => (Array.isArray(m.parts) ? m.parts : []))
       .filter(
         (p: any): p is { type: "file"; url: string; name: string } =>
-          p.type === "file"
+          typeof p === "object" && p !== null && p.type === "file"
       );
 
     await Promise.all(

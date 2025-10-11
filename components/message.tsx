@@ -121,28 +121,30 @@ const PurePreviewMessage = ({
                       className="flex flex-row gap-2"
                       data-testid={"message-attachments"}
                     >
-                      {attachmentsFromMessage.map((attachment) => {
-                        const fileAttachment = attachment as {
-                          name?: string;
-                          mediaType?: string;
-                          url?: string;
-                        };
-                        return (
-                          <PreviewAttachment
-                            attachment={{
-                              name: fileAttachment.name ?? "file",
-                              contentType:
-                                fileAttachment.mediaType ??
-                                "application/octet-stream",
-                              url: fileAttachment.url ?? "",
-                            }}
-                            key={
-                              fileAttachment.url ??
-                              `attachment-${Math.random()}`
-                            }
-                          />
-                        );
-                      })}
+                      {attachmentsFromMessage.map(
+                        (attachment, attatchmentIndex) => {
+                          const fileAttachment = attachment as {
+                            name?: string;
+                            mediaType?: string;
+                            url?: string;
+                          };
+                          return (
+                            <PreviewAttachment
+                              attachment={{
+                                name: fileAttachment.name ?? "file",
+                                contentType:
+                                  fileAttachment.mediaType ??
+                                  "application/octet-stream",
+                                url: fileAttachment.url ?? "",
+                              }}
+                              key={
+                                fileAttachment.url ??
+                                `attachment-${attatchmentIndex}`
+                              }
+                            />
+                          );
+                        }
+                      )}
                     </div>
                   )}
                 </div>
@@ -288,7 +290,7 @@ export const PreviewMessage = memo(
       return false;
     }
 
-    return true;
+    return equal(prevProps, nextProps);
   }
 );
 

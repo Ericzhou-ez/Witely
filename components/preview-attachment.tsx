@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Attachment } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Loader } from "./elements/loader";
@@ -75,19 +76,21 @@ export const PreviewAttachment = ({
           width={96}
         />
       ) : (
-        <div className="flex size-full items-center justify-center gap-2 p-3">
-          {getFileIcon(contentType)}
-          <div className="w-full truncate text-center font-medium text-sm">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="truncate">{truncateFileName(name)}</span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{name}</p>
-              </TooltipContent>
-            </Tooltip>
+        <Link href={url} target="_blank">
+          <div className="flex size-full items-center justify-center gap-2 p-3">
+            {getFileIcon(contentType)}
+            <div className="w-full truncate text-center font-medium text-sm">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="truncate">{truncateFileName(name)}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{name}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-        </div>
+        </Link>
       )}
 
       {isUploading && (

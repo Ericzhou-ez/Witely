@@ -110,8 +110,8 @@ function PureMessages({
                 {attachments && attachments.length > 0 && (
                   <AttachmentLoader
                     attachments={attachments.map((att: any) => ({
-                      name: att.name,
-                      mediaType: att.mediaType,
+                      name: (att as { name?: string }).name,
+                      mediaType: (att as { mediaType?: string }).mediaType,
                     }))}
                     className="mx-auto w-full px-2 md:px-4"
                   />

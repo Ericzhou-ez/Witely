@@ -1,5 +1,6 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import sanitize from "sanitize-filename";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
     }
 
     // Sanitize filename to prevent path traversal
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const sanitizedFilename = sanitize(filename);
     const fileBuffer = await file.arrayBuffer();
 
     try {

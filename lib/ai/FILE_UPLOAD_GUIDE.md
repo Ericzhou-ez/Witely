@@ -98,7 +98,7 @@ type FileAttachment = {
 
 1. Text files fetched from URLs have a 30-second timeout
 2. Text file content is limited to 0.5MB to prevent context overflow
-3. Maximum 10 attachments per message
+3. Maximum 8 attachments per message
 4. Files are stored permanently on Vercel Blob (consider cleanup strategy)
 
 ## Future Improvements

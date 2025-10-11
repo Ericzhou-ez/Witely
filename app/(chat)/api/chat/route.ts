@@ -129,7 +129,7 @@ async function fetchTextFileContent(file: {
 
     // Check if content is too large (max 0.5MB for text files)
     const maxSize = 0.5 * 1024 * 1024;
-    if (content.length > maxSize) {
+    if (new TextEncoder().encode(content).length > maxSize) {
       return `\n\n[File Upload: ${file.name} (${file.mediaType}) - File too large (${Math.round(content.length / 1024)}KB)]`;
     }
 
