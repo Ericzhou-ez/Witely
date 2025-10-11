@@ -24,8 +24,6 @@ function PureArtifactMessages({
   status,
   votes,
   messages,
-  setMessages,
-  regenerate,
   isReadonly,
 }: ArtifactMessagesProps) {
   const {
@@ -40,7 +38,7 @@ function PureArtifactMessages({
 
   return (
     <div
-      className="flex h-full flex-col items-center gap-4 overflow-y-scroll px-4 pt-20"
+      className="flex flex-1 flex-col items-center gap-4 overflow-y-scroll px-4 pt-20 pb-4"
       ref={messagesContainerRef}
     >
       {messages.map((message, index) => (
@@ -50,11 +48,9 @@ function PureArtifactMessages({
           isReadonly={isReadonly}
           key={message.id}
           message={message}
-          regenerate={regenerate}
           requiresScrollPadding={
             hasSentMessage && index === messages.length - 1
           }
-          setMessages={setMessages}
           vote={
             votes
               ? votes.find((vote) => vote.messageId === message.id)

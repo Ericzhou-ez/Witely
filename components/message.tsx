@@ -1,8 +1,7 @@
 "use client";
-import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
 import { motion } from "framer-motion";
-import { memo, useState } from "react";
+import { memo } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
@@ -19,7 +18,6 @@ import {
   ToolOutput,
 } from "./elements/tool";
 import { MessageActions } from "./message-actions";
-import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
@@ -29,8 +27,6 @@ const PurePreviewMessage = ({
   message,
   vote,
   isLoading,
-  setMessages,
-  regenerate,
   isReadonly,
   requiresScrollPadding,
 }: {
@@ -38,13 +34,9 @@ const PurePreviewMessage = ({
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
 }) => {
-  const [mode, setMode] = useState<"view" | "edit">("view");
-
   const attachmentsFromMessage = message.parts.filter(
     (part) => part.type === "file"
   );
@@ -61,7 +53,7 @@ const PurePreviewMessage = ({
     >
       <div
         className={cn("flex w-full items-start gap-2 md:gap-3", {
-          "justify-end": message.role === "user" && mode !== "edit",
+          "justify-end": message.role === "user",
           "justify-start": message.role === "assistant",
         })}
       >
@@ -70,35 +62,17 @@ const PurePreviewMessage = ({
             "gap-2 md:gap-4": message.parts?.some(
               (p) => p.type === "text" && p.text?.trim()
             ),
-            "min-h-96": message.role === "assistant" && requiresScrollPadding,
+            "min-h-96":
+              message.role === "assistant" &&
+              requiresScrollPadding &&
+              message.parts?.some((p) => p.type === "text" && p.text?.trim()),
             "w-full":
-              (message.role === "assistant" &&
-                message.parts?.some(
-                  (p) => p.type === "text" && p.text?.trim()
-                )) ||
-              mode === "edit",
+              message.role === "assistant" &&
+              message.parts?.some((p) => p.type === "text" && p.text?.trim()),
             "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
-              message.role === "user" && mode !== "edit",
+              message.role === "user",
           })}
         >
-          {attachmentsFromMessage.length > 0 && (
-            <div
-              className="flex flex-row justify-end gap-2"
-              data-testid={"message-attachments"}
-            >
-              {attachmentsFromMessage.map((attachment) => (
-                <PreviewAttachment
-                  attachment={{
-                    name: attachment.filename ?? "file",
-                    contentType: attachment.mediaType,
-                    url: attachment.url,
-                  }}
-                  key={attachment.url}
-                />
-              ))}
-            </div>
-          )}
-
           {message.parts?.map((part, index) => {
             const { type } = part;
             const key = `message-${message.id}-part-${index}`;
@@ -114,51 +88,67 @@ const PurePreviewMessage = ({
             }
 
             if (type === "text") {
-              if (mode === "view") {
-                return (
-                  <div key={key}>
-                    <MessageContent
-                      className={cn({
-                        "user-message-text !rounded-bl-xl w-fit break-words rounded-2xl border border-sidebar-border px-4 py-2.5":
-                          message.role === "user",
-                        "bg-transparent px-0 py-0 text-left":
-                          message.role === "assistant",
-                      })}
-                      data-testid="message-content"
-                      style={
-                        message.role === "user"
-                          ? {
-                              backgroundColor: "var(--sidebar-background)",
-                              color: "var(--foreground)",
-                            }
-                          : undefined
-                      }
-                    >
-                      <Response>{sanitizeText(part.text)}</Response>
-                    </MessageContent>
-                  </div>
-                );
-              }
-
-              if (mode === "edit") {
-                return (
-                  <div
-                    className="flex w-full flex-row items-start gap-3"
-                    key={key}
+              return (
+                <div
+                  className={cn("flex flex-col gap-2", {
+                    "items-end": message.role === "user",
+                    "items-start": message.role === "assistant",
+                  })}
+                  key={key}
+                >
+                  <MessageContent
+                    className={cn({
+                      "user-message-text !rounded-bl-xl w-fit break-words rounded-2xl border border-sidebar-border px-4 py-2.5":
+                        message.role === "user",
+                      "bg-transparent px-0 py-0 text-left":
+                        message.role === "assistant",
+                    })}
+                    data-testid="message-content"
+                    style={
+                      message.role === "user"
+                        ? {
+                            backgroundColor: "var(--sidebar-background)",
+                            color: "var(--foreground)",
+                          }
+                        : undefined
+                    }
                   >
-                    <div className="size-8" />
-                    <div className="min-w-0 flex-1">
-                      <MessageEditor
-                        key={message.id}
-                        message={message}
-                        regenerate={regenerate}
-                        setMessages={setMessages}
-                        setMode={setMode}
-                      />
+                    <Response>{sanitizeText(part.text)}</Response>
+                  </MessageContent>
+
+                  {attachmentsFromMessage.length > 0 && (
+                    <div
+                      className="flex flex-row gap-2"
+                      data-testid={"message-attachments"}
+                    >
+                      {attachmentsFromMessage.map(
+                        (attachment, attatchmentIndex) => {
+                          const fileAttachment = attachment as {
+                            name?: string;
+                            mediaType?: string;
+                            url?: string;
+                          };
+                          return (
+                            <PreviewAttachment
+                              attachment={{
+                                name: fileAttachment.name ?? "file",
+                                contentType:
+                                  fileAttachment.mediaType ??
+                                  "application/octet-stream",
+                                url: fileAttachment.url ?? "",
+                              }}
+                              key={
+                                fileAttachment.url ??
+                                `attachment-${attatchmentIndex}`
+                              }
+                            />
+                          );
+                        }
+                      )}
                     </div>
-                  </div>
-                );
-              }
+                  )}
+                </div>
+              );
             }
 
             if (type === "tool-getWeather") {
@@ -272,7 +262,6 @@ const PurePreviewMessage = ({
               isLoading={isLoading}
               key={`action-${message.id}`}
               message={message}
-              setMode={setMode}
               vote={vote}
             />
           )}

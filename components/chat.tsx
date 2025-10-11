@@ -3,7 +3,8 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast as toastFn } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -17,7 +18,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useArtifactSelector } from "@/hooks/use-artifact";
+import {
+  initialArtifactData,
+  useArtifact,
+  useArtifactSelector,
+} from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useMessages } from "@/hooks/use-messages";
@@ -28,10 +33,10 @@ import type { AppUsage } from "@/lib/usage";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
+import { DragDropWrapper } from "./drag-drop-wrapper";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
-import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 
 export function Chat({
@@ -58,6 +63,7 @@ export function Chat({
 
   const { mutate } = useSWRConfig();
   const { setDataStream } = useDataStream();
+  const { setArtifact } = useArtifact();
 
   const [input, setInput] = useState<string>("");
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
@@ -68,6 +74,12 @@ export function Chat({
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  // Reset artifact state when navigating to a different chat
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally include 'id' to reset the artifact when chat changes
+  useEffect(() => {
+    setArtifact(initialArtifactData);
+  }, [id, setArtifact]);
 
   const {
     messages,
@@ -114,10 +126,7 @@ export function Chat({
         ) {
           setShowCreditCardAlert(true);
         } else {
-          toast({
-            type: "error",
-            description: error.message,
-          });
+          toastFn.error(error.message);
         }
       }
     },
@@ -165,54 +174,89 @@ export function Chat({
     setMessages,
   });
 
+  const handleFilesDropped = useCallback(
+    async (files: File[]) => {
+      const { validateAndUploadFiles } = await import("@/lib/ai/file-upload");
+      const { chatModels } = await import("@/lib/ai/models");
+
+      const selectedModel = chatModels.find((m) => m.id === currentModelId);
+
+      if (!selectedModel) {
+        toastFn.error("Selected model not found");
+        return;
+      }
+
+      try {
+        const uploadedAttachments = await validateAndUploadFiles(
+          files,
+          selectedModel,
+          attachments.length
+        );
+
+        if (uploadedAttachments.length > 0) {
+          setAttachments((currentAttachments) => [
+            ...currentAttachments,
+            ...uploadedAttachments,
+          ]);
+        }
+      } catch (error) {
+        console.error("Error uploading files!", error);
+      }
+    },
+    [currentModelId, attachments.length]
+  );
+
   return (
     <>
-      <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
-        <ChatHeader
-          chatId={id}
-          isReadonly={isReadonly}
-          selectedVisibilityType={initialVisibilityType}
-        />
+      <DragDropWrapper
+        onFilesDropped={handleFilesDropped}
+        selectedModelId={currentModelId}
+      >
+        <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
+          <ChatHeader
+            chatId={id}
+            isReadonly={isReadonly}
+            selectedVisibilityType={initialVisibilityType}
+          />
 
-        <Messages
-          chatId={id}
-          endRef={messagesEndRef}
-          hasSentMessage={hasSentMessage}
-          isArtifactVisible={isArtifactVisible}
-          isReadonly={isReadonly}
-          messages={messages}
-          messagesContainerRef={messagesContainerRef}
-          regenerate={regenerate}
-          scrollToBottom={scrollToBottom}
-          selectedModelId={initialChatModel}
-          setMessages={setMessages}
-          status={status}
-          votes={votes}
-        />
+          <Messages
+            chatId={id}
+            endRef={messagesEndRef}
+            hasSentMessage={hasSentMessage}
+            isArtifactVisible={isArtifactVisible}
+            isReadonly={isReadonly}
+            messages={messages}
+            messagesContainerRef={messagesContainerRef}
+            scrollToBottom={scrollToBottom}
+            selectedModelId={initialChatModel}
+            status={status}
+            votes={votes}
+          />
 
-        <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-3xl gap-2 border-t-0 px-2 md:px-4">
-          {!isReadonly && (
-            <MultimodalInput
-              attachments={attachments}
-              chatId={id}
-              input={input}
-              isAtBottom={isAtBottom}
-              messages={messages}
-              onModelChange={setCurrentModelId}
-              scrollToBottom={scrollToBottom}
-              selectedModelId={currentModelId}
-              selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
-              setAttachments={setAttachments}
-              setInput={setInput}
-              setMessages={setMessages}
-              status={status}
-              stop={stop}
-              usage={usage}
-            />
-          )}
+          <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-3xl gap-2 border-t-0 px-2 md:px-4">
+            {!isReadonly && (
+              <MultimodalInput
+                attachments={attachments}
+                chatId={id}
+                input={input}
+                isAtBottom={isAtBottom}
+                messages={messages}
+                onModelChange={setCurrentModelId}
+                scrollToBottom={scrollToBottom}
+                selectedModelId={currentModelId}
+                selectedVisibilityType={visibilityType}
+                sendMessage={sendMessage}
+                setAttachments={setAttachments}
+                setInput={setInput}
+                setMessages={setMessages}
+                status={status}
+                stop={stop}
+                usage={usage}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      </DragDropWrapper>
 
       <Artifact
         attachments={attachments}
