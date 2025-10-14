@@ -21,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Kbd, KbdGroup } from "./ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function AppSidebar({ user }: { user: User | undefined }) {
@@ -59,7 +60,10 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent align="end" className="hidden md:block">
-                New Chat
+                New Chat{" "}
+                <KbdGroup>
+                  <Kbd>⌘o</Kbd>
+                </KbdGroup>
               </TooltipContent>
             </Tooltip>
           </div>

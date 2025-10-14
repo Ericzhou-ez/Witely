@@ -13,6 +13,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import type { AppUsage } from "../usage";
+import type { PersonalInformation } from "./types";
 
 export const userTypeEnum = pgEnum("user_type_enum", [
   "plus",
@@ -184,3 +185,12 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const personalization = pgTable("Personalization", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  information: json("information").$type<PersonalInformation>(),
+  bio: varchar("bio", { length: 500 }),
+});

@@ -18,7 +18,7 @@ import postgres from "postgres";
 import type { UserType } from "@/app/(auth)/auth";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
-import { ChatSDKError } from "../errors";
+import { ChatSDKError, WitelyError } from "../errors";
 import type { AppUsage } from "../usage";
 import {
   type Chat,
@@ -26,6 +26,7 @@ import {
   type DBMessage,
   document,
   message,
+  personalization,
   type Suggestion,
   stream,
   suggestion,
@@ -33,6 +34,7 @@ import {
   user,
   vote,
 } from "./schema";
+import type { PersonalInformation as PersonalInformationType } from "./types";
 import { generateHashedPassword } from "./utils";
 
 // Optionally, if not using email/pass login, you can
@@ -601,6 +603,84 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+export async function updatePersonalInformationByUserId({
+  userId,
+  personalInformation,
+}: {
+  userId: string;
+  personalInformation: PersonalInformationType;
+}) {
+  try {
+    const existing = await db
+      .select()
+      .from(personalization)
+      .where(eq(personalization.userId, userId));
+
+    if (existing.length > 0) {
+      return await db
+        .update(personalization)
+        .set({ information: personalInformation })
+        .where(eq(personalization.userId, userId));
+    }
+
+    return await db
+      .insert(personalization)
+      .values({ userId, information: personalInformation });
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to update personal information by user id"
+    );
+  }
+}
+
+export async function updateBioByUserId({
+  userId,
+  bio,
+}: {
+  userId: string;
+  bio: string;
+}) {
+  try {
+    const existing = await db
+      .select()
+      .from(personalization)
+      .where(eq(personalization.userId, userId));
+
+    if (existing.length > 0) {
+      return await db
+        .update(personalization)
+        .set({ bio })
+        .where(eq(personalization.userId, userId));
+    }
+
+    return db.insert(personalization).values({ userId, bio });
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to update personal information by user id"
+    );
+  }
+}
+
+export async function getAllPersonalizationsByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(personalization)
+      .where(eq(personalization.userId, userId));
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to get personalization by user id"
     );
   }
 }
