@@ -3,8 +3,7 @@
 import { Check, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "@/components/toast";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,17 +19,12 @@ export function AccountSection() {
     if (user?.id) {
       await navigator.clipboard.writeText(user?.id ?? "");
       setCopied(true);
+
       setTimeout(() => {
         setCopied(false);
       }, 3000);
     }
   };
-
-  useEffect(() => {
-    if (copied && user?.id) {
-      toast({ type: "success", description: "Copied user uuid to clipboard!" });
-    }
-  }, [copied, user?.id]);
 
   return (
     <div className="space-y-8">

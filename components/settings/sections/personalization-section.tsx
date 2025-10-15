@@ -1,7 +1,7 @@
 "use client";
 
 import { HelpCircle } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { toast } from "@/components/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -16,25 +16,54 @@ import BioEdit from "./personalization-components/bio-edit";
 import PersonalInfoDisplay from "./personalization-components/personal-info-display";
 import PersonalInfoEdit from "./personalization-components/personal-info-edit";
 
-export function PersonalizationSection() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+type PersonalInfoFields = {
+  name: string;
+  email: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  gender: string;
+};
 
-  // Personal info states
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [addressLine1, setAddressLine1] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [country, setCountry] = useState("");
-  const [gender, setGender] = useState("");
-  const [isEditingPersonalInfo, setIsEditingPersonalInfo] = useState(false);
+type State = {
+  isLoading: boolean;
+  isSaving: boolean;
+  isEditingPersonalInfo: boolean;
+  isEditingBio: boolean;
+  personalInfo: PersonalInfoFields;
+  originalPersonalInfo: PersonalInfoFields;
+  bio: string;
+  originalBio: string;
+};
 
-  // Original values for tracking changes
-  const [originalValues, setOriginalValues] = useState({
+type Action =
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_SAVING"; payload: boolean }
+  | { type: "SET_EDITING_PERSONAL_INFO"; payload: boolean }
+  | { type: "SET_EDITING_BIO"; payload: boolean }
+  | {
+      type: "UPDATE_PERSONAL_INFO_FIELD";
+      field: keyof PersonalInfoFields;
+      value: string;
+    }
+  | { type: "SET_PERSONAL_INFO"; payload: PersonalInfoFields }
+  | { type: "SET_ORIGINAL_PERSONAL_INFO"; payload: PersonalInfoFields }
+  | { type: "RESET_PERSONAL_INFO" }
+  | { type: "UPDATE_BIO"; payload: string }
+  | { type: "SET_ORIGINAL_BIO"; payload: string }
+  | { type: "RESET_BIO" }
+  | { type: "LOAD_PERSONALIZATION"; payload: Personalization };
+
+const initialState: State = {
+  isLoading: true,
+  isSaving: false,
+  isEditingPersonalInfo: false,
+  isEditingBio: false,
+  personalInfo: {
     name: "",
     email: "",
     phone: "",
@@ -45,12 +74,90 @@ export function PersonalizationSection() {
     zipCode: "",
     country: "",
     gender: "",
-  });
+  },
+  originalPersonalInfo: {
+    name: "",
+    email: "",
+    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+    gender: "",
+  },
+  bio: "",
+  originalBio: "",
+};
 
-  // Bio states
-  const [bio, setBio] = useState("");
-  const [originalBio, setOriginalBio] = useState("");
-  const [isEditingBio, setIsEditingBio] = useState(false);
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_LOADING":
+      return { ...state, isLoading: action.payload };
+    case "SET_SAVING":
+      return { ...state, isSaving: action.payload };
+    case "SET_EDITING_PERSONAL_INFO":
+      return { ...state, isEditingPersonalInfo: action.payload };
+    case "SET_EDITING_BIO":
+      return { ...state, isEditingBio: action.payload };
+    case "UPDATE_PERSONAL_INFO_FIELD":
+      return {
+        ...state,
+        personalInfo: {
+          ...state.personalInfo,
+          [action.field]: action.value,
+        },
+      };
+    case "SET_PERSONAL_INFO":
+      return { ...state, personalInfo: action.payload };
+    case "SET_ORIGINAL_PERSONAL_INFO":
+      return { ...state, originalPersonalInfo: action.payload };
+    case "RESET_PERSONAL_INFO":
+      return {
+        ...state,
+        personalInfo: state.originalPersonalInfo,
+        isEditingPersonalInfo: false,
+      };
+    case "UPDATE_BIO":
+      return { ...state, bio: action.payload };
+    case "SET_ORIGINAL_BIO":
+      return { ...state, originalBio: action.payload };
+    case "RESET_BIO":
+      return {
+        ...state,
+        bio: state.originalBio,
+        isEditingBio: false,
+      };
+    case "LOAD_PERSONALIZATION": {
+      const personalInfoData: PersonalInfoFields = {
+        name: action.payload.name || "",
+        email: action.payload.email || "",
+        phone: action.payload.phone || "",
+        addressLine1: action.payload.addressLine1 || "",
+        addressLine2: action.payload.addressLine2 || "",
+        city: action.payload.city || "",
+        state: action.payload.state || "",
+        zipCode: action.payload.zipCode || "",
+        country: action.payload.country || "",
+        gender: action.payload.gender || "",
+      };
+      return {
+        ...state,
+        personalInfo: personalInfoData,
+        originalPersonalInfo: personalInfoData,
+        bio: action.payload.bio || "",
+        originalBio: action.payload.bio || "",
+        isLoading: false,
+      };
+    }
+    default:
+      return state;
+  }
+}
+
+export function PersonalizationSection() {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   // Fetch personalization data on mount
   useEffect(() => {
@@ -61,7 +168,7 @@ export function PersonalizationSection() {
         if (!response.ok) {
           if (response.status === 404) {
             // No personalization data yet
-            setIsLoading(false);
+            dispatch({ type: "SET_LOADING", payload: false });
             return;
           }
           throw new Error("Failed to fetch personalization data");
@@ -70,35 +177,7 @@ export function PersonalizationSection() {
         const data = await response.json();
         const personalization: Personalization = data.personalization;
 
-        // Set personal info
-        const values = {
-          name: personalization.name || "",
-          email: personalization.email || "",
-          phone: personalization.phone || "",
-          addressLine1: personalization.addressLine1 || "",
-          addressLine2: personalization.addressLine2 || "",
-          city: personalization.city || "",
-          state: personalization.state || "",
-          zipCode: personalization.zipCode || "",
-          country: personalization.country || "",
-          gender: personalization.gender || "",
-        };
-
-        setName(values.name);
-        setEmail(values.email);
-        setPhone(values.phone);
-        setAddressLine1(values.addressLine1);
-        setAddressLine2(values.addressLine2);
-        setCity(values.city);
-        setState(values.state);
-        setZipCode(values.zipCode);
-        setCountry(values.country);
-        setGender(values.gender);
-        setBio(personalization.bio || "");
-        setOriginalBio(personalization.bio || "");
-
-        // Store original values for comparison
-        setOriginalValues(values);
+        dispatch({ type: "LOAD_PERSONALIZATION", payload: personalization });
       } catch (error) {
         console.error("Error fetching personalization:", error);
         toast({
@@ -106,7 +185,7 @@ export function PersonalizationSection() {
           description: "Failed to load personalization data",
         });
       } finally {
-        setIsLoading(false);
+        dispatch({ type: "SET_LOADING", payload: false });
       }
     }
 
@@ -115,45 +194,22 @@ export function PersonalizationSection() {
 
   // Save personal information
   const handleSavePersonalInfo = useCallback(async () => {
-    setIsSaving(true);
+    dispatch({ type: "SET_SAVING", payload: true });
     try {
       // Only send changed fields
-      const changes: Partial<typeof originalValues> = {};
+      const changes: Partial<PersonalInfoFields> = {};
 
-      if (name !== originalValues.name) {
-        changes.name = name;
-      }
-      if (email !== originalValues.email) {
-        changes.email = email;
-      }
-      if (phone !== originalValues.phone) {
-        changes.phone = phone;
-      }
-      if (addressLine1 !== originalValues.addressLine1) {
-        changes.addressLine1 = addressLine1;
-      }
-      if (addressLine2 !== originalValues.addressLine2) {
-        changes.addressLine2 = addressLine2;
-      }
-      if (city !== originalValues.city) {
-        changes.city = city;
-      }
-      if (state !== originalValues.state) {
-        changes.state = state;
-      }
-      if (zipCode !== originalValues.zipCode) {
-        changes.zipCode = zipCode;
-      }
-      if (country !== originalValues.country) {
-        changes.country = country;
-      }
-      if (gender !== originalValues.gender) {
-        changes.gender = gender;
+      for (const key of Object.keys(state.personalInfo) as Array<
+        keyof PersonalInfoFields
+      >) {
+        if (state.personalInfo[key] !== state.originalPersonalInfo[key]) {
+          changes[key] = state.personalInfo[key];
+        }
       }
 
       // If nothing changed, don't make the request
       if (Object.keys(changes).length === 0) {
-        setIsEditingPersonalInfo(false);
+        dispatch({ type: "SET_EDITING_PERSONAL_INFO", payload: false });
         return;
       }
 
@@ -171,24 +227,16 @@ export function PersonalizationSection() {
       }
 
       // Update original values to new values
-      setOriginalValues({
-        name,
-        email,
-        phone,
-        addressLine1,
-        addressLine2,
-        city,
-        state,
-        zipCode,
-        country,
-        gender,
+      dispatch({
+        type: "SET_ORIGINAL_PERSONAL_INFO",
+        payload: state.personalInfo,
       });
 
       toast({
         type: "success",
         description: "Personal information saved successfully",
       });
-      setIsEditingPersonalInfo(false);
+      dispatch({ type: "SET_EDITING_PERSONAL_INFO", payload: false });
     } catch (error) {
       console.error("Error saving personal info:", error);
       toast({
@@ -196,57 +244,35 @@ export function PersonalizationSection() {
         description: "Failed to save personal information",
       });
     } finally {
-      setIsSaving(false);
+      dispatch({ type: "SET_SAVING", payload: false });
     }
-  }, [
-    name,
-    email,
-    phone,
-    addressLine1,
-    addressLine2,
-    city,
-    state,
-    zipCode,
-    country,
-    gender,
-    originalValues,
-  ]);
+  }, [state.personalInfo, state.originalPersonalInfo]);
 
   // Cancel personal info editing
   const handleCancelPersonalInfo = useCallback(() => {
-    setName(originalValues.name);
-    setEmail(originalValues.email);
-    setPhone(originalValues.phone);
-    setAddressLine1(originalValues.addressLine1);
-    setAddressLine2(originalValues.addressLine2);
-    setCity(originalValues.city);
-    setState(originalValues.state);
-    setZipCode(originalValues.zipCode);
-    setCountry(originalValues.country);
-    setGender(originalValues.gender);
-    setIsEditingPersonalInfo(false);
-  }, [originalValues]);
+    dispatch({ type: "RESET_PERSONAL_INFO" });
+  }, []);
 
   // Save bio
   const handleSaveBio = useCallback(async () => {
-    setIsSaving(true);
+    dispatch({ type: "SET_SAVING", payload: true });
     try {
       const response = await fetch("/api/personalization/bio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bio }),
+        body: JSON.stringify({ bio: state.bio }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to save bio");
       }
 
-      setOriginalBio(bio);
+      dispatch({ type: "SET_ORIGINAL_BIO", payload: state.bio });
       toast({
         type: "success",
         description: "Bio saved successfully",
       });
-      setIsEditingBio(false);
+      dispatch({ type: "SET_EDITING_BIO", payload: false });
     } catch (error) {
       console.error("Error saving bio:", error);
       toast({
@@ -254,27 +280,26 @@ export function PersonalizationSection() {
         description: "An unexpected error occurred",
       });
     } finally {
-      setIsSaving(false);
+      dispatch({ type: "SET_SAVING", payload: false });
     }
-  }, [bio]);
+  }, [state.bio]);
 
   // Cancel bio editing
   const handleCancelBio = useCallback(() => {
-    setBio(originalBio);
-    setIsEditingBio(false);
-  }, [originalBio]);
+    dispatch({ type: "RESET_BIO" });
+  }, []);
 
   // Edit personal info handler
   const handleEditPersonalInfo = useCallback(() => {
-    setIsEditingPersonalInfo(true);
+    dispatch({ type: "SET_EDITING_PERSONAL_INFO", payload: true });
   }, []);
 
   // Edit bio handler
   const handleEditBio = useCallback(() => {
-    setIsEditingBio(true);
+    dispatch({ type: "SET_EDITING_BIO", payload: true });
   }, []);
 
-  if (isLoading) {
+  if (state.isLoading) {
     return (
       <div className="space-y-16">
         <div className="space-y-4">
@@ -293,60 +318,122 @@ export function PersonalizationSection() {
     <TooltipProvider>
       <div className="space-y-16">
         {/* Personal Information Section */}
-        {isEditingPersonalInfo ? (
+        {state.isEditingPersonalInfo ? (
           <PersonalInfoEdit
-            addressLine1={addressLine1}
-            addressLine2={addressLine2}
-            city={city}
-            country={country}
-            email={email}
-            gender={gender}
-            isSaving={isSaving}
-            name={name}
-            onAddressLine1Change={setAddressLine1}
-            onAddressLine2Change={setAddressLine2}
+            addressLine1={state.personalInfo.addressLine1}
+            addressLine2={state.personalInfo.addressLine2}
+            city={state.personalInfo.city}
+            country={state.personalInfo.country}
+            email={state.personalInfo.email}
+            gender={state.personalInfo.gender}
+            isSaving={state.isSaving}
+            name={state.personalInfo.name}
+            onAddressLine1Change={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "addressLine1",
+                value,
+              })
+            }
+            onAddressLine2Change={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "addressLine2",
+                value,
+              })
+            }
             onCancel={handleCancelPersonalInfo}
-            onCityChange={setCity}
-            onCountryChange={setCountry}
-            onEmailChange={setEmail}
-            onGenderChange={setGender}
-            onNameChange={setName}
-            onPhoneChange={setPhone}
+            onCityChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "city",
+                value,
+              })
+            }
+            onCountryChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "country",
+                value,
+              })
+            }
+            onEmailChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "email",
+                value,
+              })
+            }
+            onGenderChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "gender",
+                value,
+              })
+            }
+            onNameChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "name",
+                value,
+              })
+            }
+            onPhoneChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "phone",
+                value,
+              })
+            }
             onSave={handleSavePersonalInfo}
-            onStateChange={setState}
-            onZipCodeChange={setZipCode}
-            phone={phone}
-            state={state}
-            zipCode={zipCode}
+            onStateChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "state",
+                value,
+              })
+            }
+            onZipCodeChange={(value) =>
+              dispatch({
+                type: "UPDATE_PERSONAL_INFO_FIELD",
+                field: "zipCode",
+                value,
+              })
+            }
+            phone={state.personalInfo.phone}
+            state={state.personalInfo.state}
+            zipCode={state.personalInfo.zipCode}
           />
         ) : (
           <PersonalInfoDisplay
-            addressLine1={addressLine1}
-            addressLine2={addressLine2}
-            city={city}
-            country={country}
-            email={email}
-            gender={gender}
-            name={name}
+            addressLine1={state.personalInfo.addressLine1}
+            addressLine2={state.personalInfo.addressLine2}
+            city={state.personalInfo.city}
+            country={state.personalInfo.country}
+            email={state.personalInfo.email}
+            gender={state.personalInfo.gender}
+            name={state.personalInfo.name}
             onEdit={handleEditPersonalInfo}
-            phone={phone}
-            state={state}
-            zipCode={zipCode}
+            phone={state.personalInfo.phone}
+            state={state.personalInfo.state}
+            zipCode={state.personalInfo.zipCode}
           />
         )}
 
         <div>
           {/* Bio Section */}
-          {isEditingBio ? (
+          {state.isEditingBio ? (
             <BioEdit
-              bio={bio}
-              isSaving={isSaving}
-              onBioChange={setBio}
+              bio={state.bio}
+              isSaving={state.isSaving}
+              onBioChange={(value) =>
+                dispatch({ type: "UPDATE_BIO", payload: value })
+              }
               onCancel={handleCancelBio}
               onSave={handleSaveBio}
             />
           ) : (
-            <BioDisplay bio={bio} onEdit={handleEditBio} />
+            <BioDisplay bio={state.bio} onEdit={handleEditBio} />
           )}
 
           {/* Disclaimer */}
