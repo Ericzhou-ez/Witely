@@ -16,6 +16,15 @@ type SettingsDesktopLayoutProps = {
   onClose: () => void;
 };
 
+/**
+ * Desktop layout component for the settings interface.
+ * Provides a sidebar navigation for different settings sections and renders the selected section in the main content area.
+ * Supports external links for certain sections and handles modal expansion.
+ *
+ * @param {SettingsDesktopLayoutProps} props - The component props.
+ * @param {() => void} props.onClose - Function to call when the user wants to close the settings modal.
+ * @returns {JSX.Element} The rendered settings desktop layout component.
+ */
 export function SettingsDesktopLayout({ onClose }: SettingsDesktopLayoutProps) {
   const [activeSection, setActiveSection] = useState("general");
   const { isExpanded, toggleExpanded } = useSettingsModal();

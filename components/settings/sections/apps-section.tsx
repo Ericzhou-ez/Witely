@@ -4,7 +4,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-const connectedApps = [
+interface App {
+  /**
+   * Unique identifier for the app.
+   */
+  id: string;
+  /**
+   * Display name of the app.
+   */
+  name: string;
+  /**
+   * Brief description of the app's functionality.
+   */
+  description: string;
+  /**
+   * Whether the app is currently connected.
+   */
+  connected: boolean;
+}
+
+const connectedApps: App[] = [
   {
     id: "google-calendar",
     name: "Google Calendar",
@@ -31,9 +50,15 @@ const connectedApps = [
   },
 ];
 
-export function AppsSection() {
+/**
+ * AppsSection component displays a list of connected applications in the settings.
+ * It shows app names, descriptions, connection status, and connect/disconnect buttons.
+ * 
+ * @returns {JSX.Element} The rendered AppsSection component.
+ */
+export function AppsSection(): JSX.Element {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="apps-section">
       <div className="space-y-1">
         <Label className="font-normal text-base">Connected apps</Label>
         <p className="text-muted-foreground text-sm">
@@ -46,6 +71,7 @@ export function AppsSection() {
           <div
             className="flex items-center justify-between rounded-lg border p-4"
             key={app.id}
+            data-testid={`app-item-${app.id}`}
           >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -59,6 +85,7 @@ export function AppsSection() {
               <p className="text-muted-foreground text-sm">{app.description}</p>
             </div>
             <Button
+              data-testid={`app-button-${app.id}`}
               onClick={() => {
                 // Handle connect/disconnect
               }}

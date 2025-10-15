@@ -12,6 +12,12 @@ type SettingsModalStore = {
   toggleExpanded: () => void;
 };
 
+/**
+ * A Zustand store hook for managing the state of the settings modal.
+ * It handles opening, closing, and expanding the modal.
+ *
+ * @returns {SettingsModalStore} An object containing the modal's state and action methods.
+ */
 export const useSettingsModal = create<SettingsModalStore>((set) => ({
   isOpen: false,
   isExpanded: false,

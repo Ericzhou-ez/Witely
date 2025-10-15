@@ -11,7 +11,19 @@ import {
 } from "@/components/ui/select";
 import { GENDER_OPTIONS } from "./personal-info-display";
 
-// Memoized input field component
+/**
+ * Memoized reusable input field with label and optional description.
+ *
+ * @param {Object} props - Props for the input field
+ * @param {string} props.id - The ID for the input
+ * @param {string} props.label - The label text
+ * @param {string} props.value - The current value
+ * @param {(value: string) => void} props.onChange - Handler for value changes
+ * @param {string} props.placeholder - Placeholder text
+ * @param {string} [props.type] - Input type (default: text)
+ * @param {string} [props.description] - Optional description
+ * @returns {JSX.Element} The input field component
+ */
 const InputField = memo(
   ({
     id,
@@ -36,6 +48,7 @@ const InputField = memo(
       </Label>
       <Input
         id={id}
+        data-testid={`personal-info-input-${id}`}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         type={type}
@@ -49,7 +62,14 @@ const InputField = memo(
 );
 InputField.displayName = "InputField";
 
-// Memoized gender select component
+/**
+ * Memoized select component for gender options.
+ *
+ * @param {Object} props - Props for the gender select
+ * @param {string} props.value - Current gender value
+ * @param {(value: string) => void} props.onChange - Change handler
+ * @returns {JSX.Element} The select component
+ */
 const GenderSelect = memo(
   ({
     value,
@@ -66,7 +86,7 @@ const GenderSelect = memo(
         Gender
       </Label>
       <Select onValueChange={onChange} value={value}>
-        <SelectTrigger>
+        <SelectTrigger data-testid="personal-info-gender-select">
           <SelectValue placeholder="Select your gender" />
         </SelectTrigger>
         <SelectContent>
@@ -82,7 +102,15 @@ const GenderSelect = memo(
 );
 GenderSelect.displayName = "GenderSelect";
 
-// Memoized action buttons component
+/**
+ * Memoized buttons for save and cancel actions.
+ *
+ * @param {Object} props - Props for action buttons
+ * @param {() => void} props.onSave - Save action handler
+ * @param {() => void} props.onCancel - Cancel action handler
+ * @param {boolean} [props.isSaving] - Saving state
+ * @returns {JSX.Element} The buttons JSX
+ */
 const ActionButtons = memo(
   ({
     onSave,
@@ -94,10 +122,11 @@ const ActionButtons = memo(
     isSaving?: boolean;
   }) => (
     <div className="flex gap-2 pt-2">
-      <Button disabled={isSaving} onClick={onSave} size="sm">
+      <Button data-testid="personal-info-save-btn" disabled={isSaving} onClick={onSave} size="sm">
         {isSaving ? "Saving..." : "Save Changes"}
       </Button>
       <Button
+        data-testid="personal-info-cancel-btn"
         disabled={isSaving}
         onClick={onCancel}
         size="sm"
@@ -110,7 +139,35 @@ const ActionButtons = memo(
 );
 ActionButtons.displayName = "ActionButtons";
 
-// Personal Info Edit Component
+/**
+ * Component for editing user's personal information.
+ *
+ * @param {Object} props - The props object
+ * @param {string} props.name - User's full name
+ * @param {string} props.email - User's email
+ * @param {string} props.phone - User's phone number
+ * @param {string} props.addressLine1 - Address line 1
+ * @param {string} props.addressLine2 - Address line 2
+ * @param {string} props.city - City
+ * @param {string} props.state - State or province
+ * @param {string} props.zipCode - ZIP or postal code
+ * @param {string} props.country - Country or region
+ * @param {string} props.gender - Gender selection
+ * @param {() => void} props.onSave - Save handler
+ * @param {() => void} props.onCancel - Cancel handler
+ * @param {(value: string) => void} props.onNameChange - Name change handler
+ * @param {(value: string) => void} props.onEmailChange - Email change handler
+ * @param {(value: string) => void} props.onPhoneChange - Phone change handler
+ * @param {(value: string) => void} props.onAddressLine1Change - Address line 1 change handler
+ * @param {(value: string) => void} props.onAddressLine2Change - Address line 2 change handler
+ * @param {(value: string) => void} props.onCityChange - City change handler
+ * @param {(value: string) => void} props.onStateChange - State change handler
+ * @param {(value: string) => void} props.onZipCodeChange - ZIP change handler
+ * @param {(value: string) => void} props.onCountryChange - Country change handler
+ * @param {(value: string) => void} props.onGenderChange - Gender change handler
+ * @param {boolean} [props.isSaving] - Whether saving is in progress
+ * @returns {JSX.Element} The edit form JSX element
+ */
 function PersonalInfoEditComponent({
   name,
   email,

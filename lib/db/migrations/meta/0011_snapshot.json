@@ -1,640 +1,10 @@
 {
-  "id": "8256ba00-3d5a-4ee2-8b4e-6b1278443866",
-  "prevId": "d24b0043-c4d8-4533-959a-3faf92b78656",
-  "version": "7",
-  "dialect": "postgresql",
-  "tables": {
-    "public.Chat": {
-      "name": "Chat",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "visibility": {
-          "name": "visibility",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'private'"
-        },
-        "lastContext": {
-          "name": "lastContext",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Chat_userId_User_id_fk": {
-          "name": "Chat_userId_User_id_fk",
-          "tableFrom": "Chat",
-          "tableTo": "User",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.Document": {
-      "name": "Document",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'text'"
-        },
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Document_userId_User_id_fk": {
-          "name": "Document_userId_User_id_fk",
-          "tableFrom": "Document",
-          "tableTo": "User",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "Document_id_createdAt_pk": {
-          "name": "Document_id_createdAt_pk",
-          "columns": [
-            "id",
-            "createdAt"
-          ]
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "public.Message_v2": {
-      "name": "Message_v2",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "chatId": {
-          "name": "chatId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "parts": {
-          "name": "parts",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "attachments": {
-          "name": "attachments",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Message_v2_chatId_Chat_id_fk": {
-          "name": "Message_v2_chatId_Chat_id_fk",
-          "tableFrom": "Message_v2",
-          "tableTo": "Chat",
-          "columnsFrom": [
-            "chatId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.Message": {
-      "name": "Message",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "chatId": {
-          "name": "chatId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content": {
-          "name": "content",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Message_chatId_Chat_id_fk": {
-          "name": "Message_chatId_Chat_id_fk",
-          "tableFrom": "Message",
-          "tableTo": "Chat",
-          "columnsFrom": [
-            "chatId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.PersonalInformation": {
-      "name": "PersonalInformation",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "information": {
-          "name": "information",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bio": {
-          "name": "bio",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "PersonalInformation_userId_User_id_fk": {
-          "name": "PersonalInformation_userId_User_id_fk",
-          "tableFrom": "PersonalInformation",
-          "tableTo": "User",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.Stream": {
-      "name": "Stream",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "chatId": {
-          "name": "chatId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Stream_chatId_Chat_id_fk": {
-          "name": "Stream_chatId_Chat_id_fk",
-          "tableFrom": "Stream",
-          "tableTo": "Chat",
-          "columnsFrom": [
-            "chatId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "Stream_id_pk": {
-          "name": "Stream_id_pk",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "public.Suggestion": {
-      "name": "Suggestion",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "documentId": {
-          "name": "documentId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "documentCreatedAt": {
-          "name": "documentCreatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "originalText": {
-          "name": "originalText",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "suggestedText": {
-          "name": "suggestedText",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "isResolved": {
-          "name": "isResolved",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Suggestion_userId_User_id_fk": {
-          "name": "Suggestion_userId_User_id_fk",
-          "tableFrom": "Suggestion",
-          "tableTo": "User",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk": {
-          "name": "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk",
-          "tableFrom": "Suggestion",
-          "tableTo": "Document",
-          "columnsFrom": [
-            "documentId",
-            "documentCreatedAt"
-          ],
-          "columnsTo": [
-            "id",
-            "createdAt"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "Suggestion_id_pk": {
-          "name": "Suggestion_id_pk",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "public.User": {
-      "name": "User",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "profile_url": {
-          "name": "profile_url",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "password": {
-          "name": "password",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "type": {
-          "name": "type",
-          "type": "user_type_enum",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'free'"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.Vote_v2": {
-      "name": "Vote_v2",
-      "schema": "",
-      "columns": {
-        "chatId": {
-          "name": "chatId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "messageId": {
-          "name": "messageId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "isUpvoted": {
-          "name": "isUpvoted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Vote_v2_chatId_Chat_id_fk": {
-          "name": "Vote_v2_chatId_Chat_id_fk",
-          "tableFrom": "Vote_v2",
-          "tableTo": "Chat",
-          "columnsFrom": [
-            "chatId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "Vote_v2_messageId_Message_v2_id_fk": {
-          "name": "Vote_v2_messageId_Message_v2_id_fk",
-          "tableFrom": "Vote_v2",
-          "tableTo": "Message_v2",
-          "columnsFrom": [
-            "messageId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "Vote_v2_chatId_messageId_pk": {
-          "name": "Vote_v2_chatId_messageId_pk",
-          "columns": [
-            "chatId",
-            "messageId"
-          ]
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "public.Vote": {
-      "name": "Vote",
-      "schema": "",
-      "columns": {
-        "chatId": {
-          "name": "chatId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "messageId": {
-          "name": "messageId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "isUpvoted": {
-          "name": "isUpvoted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "Vote_chatId_Chat_id_fk": {
-          "name": "Vote_chatId_Chat_id_fk",
-          "tableFrom": "Vote",
-          "tableTo": "Chat",
-          "columnsFrom": [
-            "chatId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "Vote_messageId_Message_id_fk": {
-          "name": "Vote_messageId_Message_id_fk",
-          "tableFrom": "Vote",
-          "tableTo": "Message",
-          "columnsFrom": [
-            "messageId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "Vote_chatId_messageId_pk": {
-          "name": "Vote_chatId_messageId_pk",
-          "columns": [
-            "chatId",
-            "messageId"
-          ]
-        }
-      },
-      "uniqueConstraints": {}
-    }
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
   },
+  "dialect": "postgresql",
   "enums": {
     "public.user_type_enum": {
       "name": "user_type_enum",
@@ -648,11 +18,641 @@
       ]
     }
   },
+  "id": "8256ba00-3d5a-4ee2-8b4e-6b1278443866",
+  "prevId": "d24b0043-c4d8-4533-959a-3faf92b78656",
   "schemas": {},
   "sequences": {},
-  "_meta": {
-    "columns": {},
-    "schemas": {},
-    "tables": {}
-  }
+  "tables": {
+    "public.Chat": {
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "uuid"
+        },
+        "lastContext": {
+          "name": "lastContext",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "title": {
+          "name": "title",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "userId": {
+          "name": "userId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "visibility": {
+          "default": "'private'",
+          "name": "visibility",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {
+        "Chat_userId_User_id_fk": {
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Chat_userId_User_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Chat",
+          "tableTo": "User"
+        }
+      },
+      "indexes": {},
+      "name": "Chat",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.Document": {
+      "columns": {
+        "content": {
+          "name": "content",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "text": {
+          "default": "'text'",
+          "name": "text",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar"
+        },
+        "title": {
+          "name": "title",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "userId": {
+          "name": "userId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Document_id_createdAt_pk": {
+          "columns": [
+            "id",
+            "createdAt"
+          ],
+          "name": "Document_id_createdAt_pk"
+        }
+      },
+      "foreignKeys": {
+        "Document_userId_User_id_fk": {
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Document_userId_User_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Document",
+          "tableTo": "User"
+        }
+      },
+      "indexes": {},
+      "name": "Document",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.Message": {
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "content": {
+          "name": "content",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "json"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "uuid"
+        },
+        "role": {
+          "name": "role",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {
+        "Message_chatId_Chat_id_fk": {
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Message_chatId_Chat_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Message",
+          "tableTo": "Chat"
+        }
+      },
+      "indexes": {},
+      "name": "Message",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.Message_v2": {
+      "columns": {
+        "attachments": {
+          "name": "attachments",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "json"
+        },
+        "chatId": {
+          "name": "chatId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "uuid"
+        },
+        "parts": {
+          "name": "parts",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "json"
+        },
+        "role": {
+          "name": "role",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {
+        "Message_v2_chatId_Chat_id_fk": {
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Message_v2_chatId_Chat_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Message_v2",
+          "tableTo": "Chat"
+        }
+      },
+      "indexes": {},
+      "name": "Message_v2",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.PersonalInformation": {
+      "columns": {
+        "bio": {
+          "name": "bio",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "varchar(500)"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "uuid"
+        },
+        "information": {
+          "name": "information",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "json"
+        },
+        "userId": {
+          "name": "userId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {
+        "PersonalInformation_userId_User_id_fk": {
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "PersonalInformation_userId_User_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "PersonalInformation",
+          "tableTo": "User"
+        }
+      },
+      "indexes": {},
+      "name": "PersonalInformation",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.Stream": {
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Stream_id_pk": {
+          "columns": [
+            "id"
+          ],
+          "name": "Stream_id_pk"
+        }
+      },
+      "foreignKeys": {
+        "Stream_chatId_Chat_id_fk": {
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Stream_chatId_Chat_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Stream",
+          "tableTo": "Chat"
+        }
+      },
+      "indexes": {},
+      "name": "Stream",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.Suggestion": {
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "description": {
+          "name": "description",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "documentCreatedAt": {
+          "name": "documentCreatedAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "documentId": {
+          "name": "documentId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "isResolved": {
+          "default": false,
+          "name": "isResolved",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "originalText": {
+          "name": "originalText",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "suggestedText": {
+          "name": "suggestedText",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "userId": {
+          "name": "userId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Suggestion_id_pk": {
+          "columns": [
+            "id"
+          ],
+          "name": "Suggestion_id_pk"
+        }
+      },
+      "foreignKeys": {
+        "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk": {
+          "columnsFrom": [
+            "documentId",
+            "documentCreatedAt"
+          ],
+          "columnsTo": [
+            "id",
+            "createdAt"
+          ],
+          "name": "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Suggestion",
+          "tableTo": "Document"
+        },
+        "Suggestion_userId_User_id_fk": {
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Suggestion_userId_User_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Suggestion",
+          "tableTo": "User"
+        }
+      },
+      "indexes": {},
+      "name": "Suggestion",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.User": {
+      "columns": {
+        "email": {
+          "name": "email",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar(64)"
+        },
+        "id": {
+          "default": "gen_random_uuid()",
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "uuid"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar(64)"
+        },
+        "password": {
+          "name": "password",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "varchar(64)"
+        },
+        "profile_url": {
+          "name": "profile_url",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "varchar(256)"
+        },
+        "type": {
+          "default": "'free'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "user_type_enum",
+          "typeSchema": "public"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {},
+      "name": "User",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.Vote": {
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "isUpvoted": {
+          "name": "isUpvoted",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "messageId": {
+          "name": "messageId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Vote_chatId_messageId_pk": {
+          "columns": [
+            "chatId",
+            "messageId"
+          ],
+          "name": "Vote_chatId_messageId_pk"
+        }
+      },
+      "foreignKeys": {
+        "Vote_chatId_Chat_id_fk": {
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Vote_chatId_Chat_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Vote",
+          "tableTo": "Chat"
+        },
+        "Vote_messageId_Message_id_fk": {
+          "columnsFrom": [
+            "messageId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Vote_messageId_Message_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Vote",
+          "tableTo": "Message"
+        }
+      },
+      "indexes": {},
+      "name": "Vote",
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.Vote_v2": {
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        },
+        "isUpvoted": {
+          "name": "isUpvoted",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "messageId": {
+          "name": "messageId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "uuid"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Vote_v2_chatId_messageId_pk": {
+          "columns": [
+            "chatId",
+            "messageId"
+          ],
+          "name": "Vote_v2_chatId_messageId_pk"
+        }
+      },
+      "foreignKeys": {
+        "Vote_v2_chatId_Chat_id_fk": {
+          "columnsFrom": [
+            "chatId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Vote_v2_chatId_Chat_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Vote_v2",
+          "tableTo": "Chat"
+        },
+        "Vote_v2_messageId_Message_v2_id_fk": {
+          "columnsFrom": [
+            "messageId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "name": "Vote_v2_messageId_Message_v2_id_fk",
+          "onDelete": "no action",
+          "onUpdate": "no action",
+          "tableFrom": "Vote_v2",
+          "tableTo": "Message_v2"
+        }
+      },
+      "indexes": {},
+      "name": "Vote_v2",
+      "schema": "",
+      "uniqueConstraints": {}
+    }
+  },
+  "version": "7"
 }

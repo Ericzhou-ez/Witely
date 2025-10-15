@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-function BioEditComponent({
+/**\n * A component for editing the user's bio in the personalization settings.\n *\n * @param {Object} props - The component props.\n * @param {string} props.bio - The current bio text.\n * @param {() => void} props.onSave - Callback to save the bio changes.\n * @param {() => void} props.onCancel - Callback to cancel the edit.\n * @param {(value: string) => void} props.onBioChange - Callback when bio text changes.\n * @param {boolean} [props.isSaving] - Whether the save is in progress.\n *\n * @returns {JSX.Element} The bio edit form.\n */\nfunction BioEditComponent({
   bio,
   onSave,
   onCancel,
@@ -22,7 +22,7 @@ function BioEditComponent({
         <Label className="font-medium text-base" htmlFor="bio">
           Bio
         </Label>
-        <Textarea
+        <Textarea data-testid="bio-textarea"
           className="mt-4 resize-none"
           id="bio"
           maxLength={500}
