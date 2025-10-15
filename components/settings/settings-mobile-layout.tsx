@@ -29,7 +29,7 @@ export function SettingsMobileLayout({ onClose }: SettingsMobileLayoutProps) {
     }
   };
 
-  const handleBack = () => {
+  /**\n * Handles back navigation from a section to the main list.\n */\nconst handleBack = () => {
     setActiveSection(null);
   };
 
@@ -115,6 +115,14 @@ export function SettingsMobileLayout({ onClose }: SettingsMobileLayoutProps) {
                   <ChevronLeft className="size-5 rotate-180 text-muted-foreground" />
                 )}
               </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+/button>
             ))}
           </div>
         )}

@@ -9,14 +9,26 @@ import {
   User,
 } from "lucide-react";
 
+/**
+ * Type for settings sections in the settings page.
+ */
 export type SettingsSection = {
+  /** Unique ID for the section */
   id: string;
+  /** Display label for the section */
   label: string;
+  /** Icon component from lucide-react */
   icon: LucideIcon;
+  /** Whether the section is external (links to another page) */
   isExternal?: boolean;
+  /** External path if isExternal is true */
   externalPath?: string;
 };
 
+/**
+ * Array of settings sections for the settings page.
+ * Includes internal and external sections.
+ */
 export const settingsSections: SettingsSection[] = [
   {
     id: "general",

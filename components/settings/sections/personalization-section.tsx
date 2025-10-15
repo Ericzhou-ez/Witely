@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { HelpCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -16,25 +16,22 @@ import BioEdit from "./personalization-components/bio-edit";
 import PersonalInfoDisplay from "./personalization-components/personal-info-display";
 import PersonalInfoEdit from "./personalization-components/personal-info-edit";
 
+/**
+ * PersonalizationSection component.
+ * 
+ * This component manages the user's personal information and bio settings.
+ * It fetches existing data on mount, allows editing in separate modes for personal info and bio,
+ * and handles saving changes to the backend API.
+ * 
+ * State includes loading, saving, edit modes, personal info fields, bio, and original values for change detection.
+ * No external props.
+ */
 export function PersonalizationSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Personal info states
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [addressLine1, setAddressLine1] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [country, setCountry] = useState("");
-  const [gender, setGender] = useState("");
-  const [isEditingPersonalInfo, setIsEditingPersonalInfo] = useState(false);
-
-  // Original values for tracking changes
-  const [originalValues, setOriginalValues] = useState({
+  // Consolidated personal info state
+  const [personalInfo, setPersonalInfo] = useState({
     name: "",
     email: "",
     phone: "",
@@ -47,9 +44,45 @@ export function PersonalizationSection() {
     gender: "",
   });
 
+  const [originalPersonalInfo, setOriginalPersonalInfo] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+    gender: "",
+  });
+
+  const [isEditingPersonalInfo, setIsEditingPersonalInfo] = useState(false);
+
   // Bio states
   const [bio, setBio] = useState("");
   const [isEditingBio, setIsEditingBio] = useState(false);
+
+  // Field updater for personal info
+  const updateField = useCallback((
+    field: keyof typeof personalInfo
+  ) => (value: string) => {
+    setPersonalInfo((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Extract current values for passing to components
+  const {
+    name,
+    email,
+    phone,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    zipCode,
+    country,
+    gender,
+  } = personalInfo;
 
   // Fetch personalization data on mount
   useEffect(() => {
@@ -83,20 +116,9 @@ export function PersonalizationSection() {
           gender: personalization.gender || "",
         };
 
-        setName(values.name);
-        setEmail(values.email);
-        setPhone(values.phone);
-        setAddressLine1(values.addressLine1);
-        setAddressLine2(values.addressLine2);
-        setCity(values.city);
-        setState(values.state);
-        setZipCode(values.zipCode);
-        setCountry(values.country);
-        setGender(values.gender);
+        setPersonalInfo(values);
+        setOriginalPersonalInfo(values);
         setBio(personalization.bio || "");
-
-        // Store original values for comparison
-        setOriginalValues(values);
       } catch (error) {
         console.error("Error fetching personalization:", error);
         toast({
@@ -111,43 +133,29 @@ export function PersonalizationSection() {
     fetchPersonalization();
   }, []);
 
+  // Extract changes for save
+  /* Test point: Ensure only changed fields are included in the save payload */
+  const getChanges = useCallback((
+    current: typeof personalInfo,
+    original: typeof originalPersonalInfo
+  ) => {
+    const changes: Partial<typeof personalInfo> = {};
+
+    Object.entries(current).forEach(([key, value]) => {
+      const typedKey = key as keyof typeof personalInfo;
+      if (value !== original[typedKey]) {
+        changes[typedKey] = value;
+      }
+    });
+
+    return changes;
+  }, []);
+
   // Save personal information
   const handleSavePersonalInfo = useCallback(async () => {
     setIsSaving(true);
     try {
-      // Only send changed fields
-      const changes: Partial<typeof originalValues> = {};
-
-      if (name !== originalValues.name) {
-        changes.name = name;
-      }
-      if (email !== originalValues.email) {
-        changes.email = email;
-      }
-      if (phone !== originalValues.phone) {
-        changes.phone = phone;
-      }
-      if (addressLine1 !== originalValues.addressLine1) {
-        changes.addressLine1 = addressLine1;
-      }
-      if (addressLine2 !== originalValues.addressLine2) {
-        changes.addressLine2 = addressLine2;
-      }
-      if (city !== originalValues.city) {
-        changes.city = city;
-      }
-      if (state !== originalValues.state) {
-        changes.state = state;
-      }
-      if (zipCode !== originalValues.zipCode) {
-        changes.zipCode = zipCode;
-      }
-      if (country !== originalValues.country) {
-        changes.country = country;
-      }
-      if (gender !== originalValues.gender) {
-        changes.gender = gender;
-      }
+      const changes = getChanges(personalInfo, originalPersonalInfo);
 
       // If nothing changed, don't make the request
       if (Object.keys(changes).length === 0) {
@@ -169,18 +177,7 @@ export function PersonalizationSection() {
       }
 
       // Update original values to new values
-      setOriginalValues({
-        name,
-        email,
-        phone,
-        addressLine1,
-        addressLine2,
-        city,
-        state,
-        zipCode,
-        country,
-        gender,
-      });
+      setOriginalPersonalInfo(personalInfo);
 
       toast({
         type: "success",
@@ -196,19 +193,7 @@ export function PersonalizationSection() {
     } finally {
       setIsSaving(false);
     }
-  }, [
-    name,
-    email,
-    phone,
-    addressLine1,
-    addressLine2,
-    city,
-    state,
-    zipCode,
-    country,
-    gender,
-    originalValues,
-  ]);
+  }, [personalInfo, originalPersonalInfo, getChanges]);
 
   // Cancel personal info editing
   const handleCancelPersonalInfo = useCallback(() => {
@@ -261,6 +246,7 @@ export function PersonalizationSection() {
   }, []);
 
   if (isLoading) {
+    /* Test point: Loading skeleton should display while fetching data */
     return (
       <div className="space-y-16">
         <div className="space-y-4">
@@ -277,66 +263,70 @@ export function PersonalizationSection() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-16">
+      <div data-testid="personalization-section" className="space-y-16">
         {/* Personal Information Section */}
-        {isEditingPersonalInfo ? (
-          <PersonalInfoEdit
-            addressLine1={addressLine1}
-            addressLine2={addressLine2}
-            city={city}
-            country={country}
-            email={email}
-            gender={gender}
-            isSaving={isSaving}
-            name={name}
-            onAddressLine1Change={setAddressLine1}
-            onAddressLine2Change={setAddressLine2}
-            onCancel={handleCancelPersonalInfo}
-            onCityChange={setCity}
-            onCountryChange={setCountry}
-            onEmailChange={setEmail}
-            onGenderChange={setGender}
-            onNameChange={setName}
-            onPhoneChange={setPhone}
-            onSave={handleSavePersonalInfo}
-            onStateChange={setState}
-            onZipCodeChange={setZipCode}
-            phone={phone}
-            state={state}
-            zipCode={zipCode}
-          />
-        ) : (
-          <PersonalInfoDisplay
-            addressLine1={addressLine1}
-            addressLine2={addressLine2}
-            city={city}
-            country={country}
-            email={email}
-            gender={gender}
-            name={name}
-            onEdit={handleEditPersonalInfo}
-            phone={phone}
-            state={state}
-            zipCode={zipCode}
-          />
-        )}
+        <section data-testid="personal-info-section">
+          {isEditingPersonalInfo ? (
+            <PersonalInfoEdit
+              addressLine1={addressLine1}
+              addressLine2={addressLine2}
+              city={city}
+              country={country}
+              email={email}
+              gender={gender}
+              isSaving={isSaving}
+              name={name}
+              onAddressLine1Change={updateField("addressLine1")}
+              onAddressLine2Change={updateField("addressLine2")}
+              onCancel={handleCancelPersonalInfo}
+              onCityChange={updateField("city")}
+              onCountryChange={updateField("country")}
+              onEmailChange={updateField("email")}
+              onGenderChange={updateField("gender")}
+              onNameChange={updateField("name")}
+              onPhoneChange={updateField("phone")}
+              onSave={handleSavePersonalInfo}
+              onStateChange={updateField("state")}
+              onZipCodeChange={updateField("zipCode")}
+              phone={phone}
+              state={state}
+              zipCode={zipCode}
+            />
+          ) : (
+            <PersonalInfoDisplay
+              addressLine1={addressLine1}
+              addressLine2={addressLine2}
+              city={city}
+              country={country}
+              email={email}
+              gender={gender}
+              name={name}
+              onEdit={handleEditPersonalInfo}
+              phone={phone}
+              state={state}
+              zipCode={zipCode}
+            />
+          )}
+        </section>
 
         <div>
           {/* Bio Section */}
-          {isEditingBio ? (
-            <BioEdit
-              bio={bio}
-              isSaving={isSaving}
-              onBioChange={setBio}
-              onCancel={handleCancelBio}
-              onSave={handleSaveBio}
-            />
-          ) : (
-            <BioDisplay bio={bio} onEdit={handleEditBio} />
-          )}
+          <section data-testid="bio-section">
+            {isEditingBio ? (
+              <BioEdit
+                bio={bio}
+                isSaving={isSaving}
+                onBioChange={setBio}
+                onCancel={handleCancelBio}
+                onSave={handleSaveBio}
+              />
+            ) : (
+              <BioDisplay bio={bio} onEdit={handleEditBio} />
+            )}
+          </section>
 
           {/* Disclaimer */}
-          <div className="mt-6 rounded-xl bg-destructive/20 p-4 shadow-sm">
+          <div data-testid="personalization-disclaimer" className="mt-6 rounded-xl bg-destructive/20 p-4 shadow-sm">
             <div className="flex items-start gap-2">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">

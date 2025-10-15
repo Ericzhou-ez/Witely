@@ -51,8 +51,25 @@ const THEME_COLOR_SCRIPT = `\
   var observer = new MutationObserver(updateThemeColor);
   observer.observe(html, { attributes: true, attributeFilter: ['class'] });
   updateThemeColor();
-})();`;
+})()`;
 
+/**
+ * Root layout component for the Witely application.
+ * This layout sets up the foundational structure for the app, including:
+ * - Google Fonts (Roboto and Roboto Mono) for consistent typography.
+ * - Metadata for SEO and page description.
+ * - Viewport configuration to prevent zoom on mobile.
+ * - A client-side script to dynamically update the theme-color meta tag based on the current theme (light, dark, paper).
+ * - Providers for session management (NextAuth), theming (Next Themes), and toast notifications (Sonner).
+ * - The SettingsModal component for user settings access.
+ *
+ * The layout ensures no hydration mismatches by suppressing warnings on the html element,
+ * as required by next-themes.
+ *
+ * @param {Object} props - The props for the layout component.
+ * @param {React.ReactNode} props.children - The child components to be rendered inside the layout.
+ * @returns {JSX.Element} The complete HTML document structure with all providers and children.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -69,6 +86,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* 
+          Test: Verify that the theme color script is injected correctly and updates the meta tag
+          on theme class changes (e.g., add 'dark' class to html and check meta content).
+        */}
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
           dangerouslySetInnerHTML={{
@@ -77,7 +98,16 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        {/* 
+          Test: Ensure SessionProvider wraps all content and provides auth context to children.
+          Mock NextAuth session in tests to verify prop drilling.
+        */}
         <SessionProvider>
+          {/* 
+            Test: Confirm ThemeProvider applies correct classes based on system/default theme,
+            and themes array includes 'light', 'dark', 'paper', 'system'.
+            Test disableTransitionOnChange prevents flicker.
+          */}
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -85,8 +115,19 @@ export default function RootLayout({
             enableSystem
             themes={["light", "dark", "paper", "system"]}
           >
+            {/* 
+              Test: Verify Toaster is positioned at top-center and handles multiple toast types.
+            */}
             <Toaster position="top-center" />
+            {/* 
+              Test: Render children within providers and ensure no hydration errors.
+              Snapshot test the overall structure.
+            */}
             {children}
+            {/* 
+              Test: Check that SettingsModal is rendered as a portal/outside main flow,
+              and opens/closes without affecting layout.
+            */}
             <SettingsModal />
           </ThemeProvider>
         </SessionProvider>

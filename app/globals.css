@@ -10,7 +10,7 @@
 @plugin "tailwindcss-animate";
 @plugin "@tailwindcss/typography";
 
-/* define design tokens (light mode) */
+/* Define design tokens for light mode */
 :root {
   --background: hsl(0 0% 100%);
   --foreground: hsl(240 10% 3.9%);
@@ -49,9 +49,9 @@
   --sidebar: hsl(0 0% 98%);
 }
 
-/* define design tokens (dark mode) */
+/* Define design tokens for dark mode */
 .dark {
-  --background: hsl(240, 10%, 8%);
+  --background: hsl(240 10% 8%);
   --foreground: hsl(0 0% 98%);
   --card: hsl(240 10% 3.9%);
   --card-foreground: hsl(0 0% 98%);
@@ -86,7 +86,7 @@
   --sidebar: hsl(240 5.9% 10%);
 }
 
-/* define design tokens (paper theme) */
+/* Define design tokens for paper theme */
 .paper {
   --background: hsl(40 40% 96%);
   --foreground: hsl(30 15% 20%);
@@ -94,7 +94,7 @@
   --card-foreground: hsl(30 15% 20%);
   --popover: hsl(42 45% 94%);
   --popover-foreground: hsl(30 15% 20%);
-  --primary: hsl(31, 26%, 19%);
+  --primary: hsl(31 26% 19%);
   --primary-foreground: hsl(42 45% 94%);
   --secondary: hsl(38 30% 88%);
   --secondary-foreground: hsl(30 20% 30%);
@@ -112,7 +112,7 @@
   --chart-3: hsl(200 40% 40%);
   --chart-4: hsl(45 70% 60%);
   --chart-5: hsl(15 80% 60%);
-  --sidebar-background: hsl(39, 31%, 89%);
+  --sidebar-background: hsl(39 31% 89%);
   --sidebar-foreground: hsl(30 15% 25%);
   --sidebar-primary: hsl(30 20% 30%);
   --sidebar-primary-foreground: hsl(42 45% 94%);
@@ -120,10 +120,10 @@
   --sidebar-accent-foreground: hsl(30 20% 30%);
   --sidebar-border: hsl(35 22% 85%);
   --sidebar-ring: hsl(25 70% 50%);
-  --sidebar: hsl(40, 27%, 91%);
+  --sidebar: hsl(40 27% 91%);
 }
 
-/* define theme */
+/* Define theme */
 @theme {
   --font-sans: var(--font-geist);
   --font-mono: var(--font-geist-mono);
@@ -186,15 +186,6 @@
   If we ever want to remove these styles, we need to add an explicit border
   color utility to any element that depends on these defaults.
 */
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
-}
 
 @layer utilities {
   /* Chrome, Safari and Opera */
@@ -242,9 +233,18 @@
   }
 }
 
+/* Consolidated base layer styles */
 @layer base {
+  *, 
+  ::after, 
+  ::before, 
+  ::backdrop, 
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
 
   body {
@@ -286,9 +286,9 @@
   @apply bg-background! dark:bg-zinc-800! outline-hidden! selection:bg-zinc-900!;
 }
 
-.ͼo.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
-.ͼo.cm-selectionBackground,
-.ͼo.cm-content::selection {
+.﻿o.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.﻿o.cm-selectionBackground,
+.﻿o.cm-content::selection {
   @apply bg-zinc-200! dark:bg-zinc-900!;
 }
 
@@ -358,15 +358,6 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -387,7 +378,7 @@
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-in 0.5s forwards;
-  /* duration: 0.05s, delay: 0.5s */
+  /* duration: 0.3s, delay: 0.5s */
 }
 
 .animate-fade-out {
@@ -438,4 +429,61 @@
 .prose :where(table):not(:where([class~="not-prose"] *)) {
   @apply border-0;
   background-color: transparent !important;
+}
+
+/* Skeleton loading styles */
+.skeleton {
+  * {
+    pointer-events: none !important;
+  }
+
+  *[class^="text-"] {
+    color: transparent;
+    @apply rounded-md bg-foreground/20 select-none animate-pulse;
+  }
+
+  .skeleton-bg {
+    @apply bg-foreground/10;
+  }
+
+  .skeleton-div {
+    @apply bg-foreground/20 animate-pulse;
+  }
+}
+
+/* CodeMirror editor styles */
+.cm-editor,
+.cm-gutters {
+  @apply bg-background! dark:bg-zinc-800! outline-hidden! selection:bg-zinc-900!;
+}
+
+.﻿o.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.﻿o.cm-selectionBackground,
+.﻿o.cm-content::selection {
+  @apply bg-zinc-200! dark:bg-zinc-900!;
+}
+
+.cm-activeLine,
+.cm-activeLineGutter {
+  @apply bg-transparent!;
+}
+
+.cm-activeLine {
+  @apply rounded-r-sm!;
+}
+
+.cm-lineNumbers {
+  @apply min-w-7;
+}
+
+.cm-foldGutter {
+  @apply min-w-3;
+}
+
+.cm-lineNumbers .cm-activeLineGutter {
+  @apply rounded-l-sm!;
+}
+
+.suggestion-highlight {
+  @apply bg-blue-200 hover:bg-blue-300 dark:hover:bg-blue-400/50 dark:text-blue-50 dark:bg-blue-500/40;
 }

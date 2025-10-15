@@ -8,6 +8,10 @@ import {
 } from "@/lib/db/queries";
 import type { PersonalInformation } from "@/lib/db/types";
 
+/**
+ * Zod schema for validating updates to personal information.
+ * All fields are optional as this is a partial update.
+ */
 const updatesSchema = z.object({
   name: z.string().max(100).optional(),
   email: z.string().email().max(255).optional(),
@@ -23,6 +27,12 @@ const updatesSchema = z.object({
     .optional(),
 });
 
+/**
+ * PATCH handler for updating user's personal information.
+ * Requires authentication. Merges provided updates with existing data.
+ * @param req - The incoming request containing the JSON body with updates.
+ * @returns NextResponse with { success: true } on success, or error response.
+ */
 export async function PATCH(req: Request) {
   try {
     const session = await auth();
@@ -51,9 +61,16 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("Validation error in personal information update", error);
+      return NextResponse.json(
+        { error: "Invalid input data", details: error.errors },
+        { status: 400 }
+      );
+    }
     console.error("Error patching personal information", error);
     return NextResponse.json(
-      { error: "Failed to patch personal information" },
+      { error: "Failed to update personal information" },
       { status: 500 }
     );
   }

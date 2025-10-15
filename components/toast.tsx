@@ -10,12 +10,23 @@ const iconsByType: Record<"success" | "error", ReactNode> = {
   error: <WarningIcon />,
 };
 
+/**
+ * Displays a custom toast notification using the Sonner library.
+ *
+ * @param props - The properties for the toast, excluding the id which is generated internally.
+ * @returns {void}
+ */
 export function toast(props: Omit<ToastProps, "id">) {
   return sonnerToast.custom((id) => (
     <Toast description={props.description} id={id} type={props.type} />
   ));
 }
 
+/**
+ * Renders the individual toast UI component.
+ *
+ * @param props - The complete properties for this toast instance.
+ */
 function Toast(props: ToastProps) {
   const { id, type, description } = props;
 
@@ -48,7 +59,9 @@ function Toast(props: ToastProps) {
           "flex toast-mobile:w-fit w-full flex-row gap-3 rounded-lg bg-white p-3",
           multiLine ? "items-start" : "items-center"
         )}
-        data-testid="toast"
+        data-testid={`toast-${id}`}
+        role="alert"
+        aria-live="polite"
         key={id}
       >
         <div
@@ -56,18 +69,21 @@ function Toast(props: ToastProps) {
             "data-[type=error]:text-red-600 data-[type=success]:text-green-600",
             { "pt-1": multiLine }
           )}
+          data-testid="toast-icon"
           data-type={type}
         >
           {iconsByType[type]}
         </div>
-        <div className="text-sm text-zinc-950" ref={descriptionRef}>
+        <div className="text-sm text-zinc-950" ref={descriptionRef} data-testid="toast-description">
           {description}
         </div>
       </div>
     </div>
   );
 }
-
+/**
+ * Type definition for the props accepted by the Toast component.
+ */
 type ToastProps = {
   id: string | number;
   type: "success" | "error";
