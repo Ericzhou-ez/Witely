@@ -46,7 +46,7 @@ import {
   saveMessages,
   updateChatLastContextById,
 } from "@/lib/db/queries";
-import { ChatSDKError } from "@/lib/errors";
+import { WitelyError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -274,7 +274,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
   } catch (_) {
-    return new ChatSDKError("bad_request:api").toResponse();
+    return new WitelyError("bad_request:api").toResponse();
   }
 
   try {
@@ -293,7 +293,7 @@ export async function POST(request: Request) {
     const session = await auth();
 
     if (!session?.user) {
-      return new ChatSDKError("unauthorized:chat").toResponse();
+      return new WitelyError("unauthorized:chat").toResponse();
     }
 
     const userType: UserType = session.user.type;
@@ -338,14 +338,14 @@ export async function POST(request: Request) {
     });
 
     if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
-      return new ChatSDKError("rate_limit:chat").toResponse();
+      return new WitelyError("rate_limit:chat").toResponse();
     }
 
     const chat = await getChatById({ id });
 
     if (chat) {
       if (chat.userId !== session.user.id) {
-        return new ChatSDKError("forbidden:chat").toResponse();
+        return new WitelyError("forbidden:chat").toResponse();
       }
     } else {
       const title = await generateTitleFromUserMessage({
@@ -545,7 +545,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const vercelId = request.headers.get("x-vercel-id");
 
-    if (error instanceof ChatSDKError) {
+    if (error instanceof WitelyError) {
       return error.toResponse();
     }
 
@@ -556,11 +556,11 @@ export async function POST(request: Request) {
         "AI Gateway requires a valid credit card on file to service requests"
       )
     ) {
-      return new ChatSDKError("bad_request:activate_gateway").toResponse();
+      return new WitelyError("bad_request:activate_gateway").toResponse();
     }
 
     console.error("Unhandled error in chat API:", error, { vercelId });
-    return new ChatSDKError("offline:chat").toResponse();
+    return new WitelyError("offline:chat").toResponse();
   }
 }
 
@@ -569,19 +569,19 @@ export async function DELETE(request: Request) {
   const id = searchParams.get("id");
 
   if (!id) {
-    return new ChatSDKError("bad_request:api").toResponse();
+    return new WitelyError("bad_request:api").toResponse();
   }
 
   const session = await auth();
 
   if (!session?.user) {
-    return new ChatSDKError("unauthorized:chat").toResponse();
+    return new WitelyError("unauthorized:chat").toResponse();
   }
 
   const chat = await getChatById({ id });
 
   if (chat?.userId !== session.user.id) {
-    return new ChatSDKError("forbidden:chat").toResponse();
+    return new WitelyError("forbidden:chat").toResponse();
   }
 
   const deletedChat = await deleteChatById({ id });

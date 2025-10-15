@@ -9,8 +9,8 @@ import {
 import type { PersonalInformation } from "@/lib/db/types";
 
 const updatesSchema = z.object({
-  name: z.string().min(5).max(100).optional(),
-  email: z.string().email().min(6).max(255).optional(),
+  name: z.string().min(1).max(100).optional(),
+  email: z.string().email().max(256).optional(),
   phone: z.string().max(20).optional(),
   addressLine1: z.string().max(100).optional(),
   addressLine2: z.string().max(100).optional(),

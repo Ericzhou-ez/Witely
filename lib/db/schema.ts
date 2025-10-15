@@ -190,6 +190,7 @@ export const personalization = pgTable("Personalization", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   userId: uuid("userId")
     .notNull()
+    .unique()
     .references(() => user.id),
   information: json("information").$type<PersonalInformation>(),
   bio: varchar("bio", { length: 500 }),
