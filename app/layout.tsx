@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto, Roboto_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { SettingsModal } from "@/components/settings-modal";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
@@ -9,7 +10,8 @@ import { SessionProvider } from "next-auth/react";
 export const metadata: Metadata = {
   metadataBase: new URL("https://chat.vercel.ai"),
   title: "Witely",
-  description: "Never Copy & Paste Again; Witely Gives You the Anwsers You Need, Before You Ask",
+  description:
+    "Never Copy & Paste Again; Witely Gives You the Anwsers You Need, Before You Ask",
 };
 
 export const viewport = {
@@ -30,6 +32,7 @@ const geistMono = Roboto_Mono({
 
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
 const DARK_THEME_COLOR = "hsl(240deg 10% 3.92%)";
+const PAPER_THEME_COLOR = "hsl(40 40% 96%)";
 const THEME_COLOR_SCRIPT = `\
 (function() {
   var html = document.documentElement;
@@ -41,7 +44,9 @@ const THEME_COLOR_SCRIPT = `\
   }
   function updateThemeColor() {
     var isDark = html.classList.contains('dark');
-    meta.setAttribute('content', isDark ? '${DARK_THEME_COLOR}' : '${LIGHT_THEME_COLOR}');
+    var isPaper = html.classList.contains('paper');
+    var color = isPaper ? '${PAPER_THEME_COLOR}' : (isDark ? '${DARK_THEME_COLOR}' : '${LIGHT_THEME_COLOR}');
+    meta.setAttribute('content', color);
   }
   var observer = new MutationObserver(updateThemeColor);
   observer.observe(html, { attributes: true, attributeFilter: ['class'] });
@@ -72,15 +77,19 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          disableTransitionOnChange
-          enableSystem
-        >
-          <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            disableTransitionOnChange
+            enableSystem
+            themes={["light", "dark", "paper", "system"]}
+          >
+            <Toaster position="top-center" />
+            {children}
+            <SettingsModal />
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

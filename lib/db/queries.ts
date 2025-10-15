@@ -18,7 +18,7 @@ import postgres from "postgres";
 import type { UserType } from "@/app/(auth)/auth";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
-import { ChatSDKError } from "../errors";
+import { WitelyError } from "../errors";
 import type { AppUsage } from "../usage";
 import {
   type Chat,
@@ -26,6 +26,7 @@ import {
   type DBMessage,
   document,
   message,
+  personalization,
   type Suggestion,
   stream,
   suggestion,
@@ -33,6 +34,7 @@ import {
   user,
   vote,
 } from "./schema";
+import type { PersonalInformation as PersonalInformationType } from "./types";
 import { generateHashedPassword } from "./utils";
 
 // Optionally, if not using email/pass login, you can
@@ -47,7 +49,7 @@ export async function getUser(email: string): Promise<User[]> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get user by email"
     );
@@ -76,7 +78,7 @@ export async function createUser({
       .returning();
     return newUser;
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to create user");
+    throw new WitelyError("bad_request:database", "Failed to create user");
   }
 }
 
@@ -90,7 +92,7 @@ export async function createUser({
 //       email: user.email,
 //     });
 //   } catch (_error) {
-//     throw new ChatSDKError(
+//     throw new WitelyError(
 //       "bad_request:database",
 //       "Failed to create guest user"
 //     );
@@ -120,7 +122,7 @@ export async function saveChat({
       visibility,
     });
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save chat");
+    throw new WitelyError("bad_request:database", "Failed to save chat");
   }
 }
 
@@ -157,7 +159,7 @@ export async function deleteChatById({ id }: { id: string }) {
       .returning();
     return chatsDeleted;
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to delete chat by id"
     );
@@ -200,7 +202,7 @@ export async function getChatsByUserId({
         .limit(1);
 
       if (!selectedChat) {
-        throw new ChatSDKError(
+        throw new WitelyError(
           "not_found:database",
           `Chat with id ${startingAfter} not found`
         );
@@ -215,7 +217,7 @@ export async function getChatsByUserId({
         .limit(1);
 
       if (!selectedChat) {
-        throw new ChatSDKError(
+        throw new WitelyError(
           "not_found:database",
           `Chat with id ${endingBefore} not found`
         );
@@ -233,7 +235,7 @@ export async function getChatsByUserId({
       hasMore,
     };
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get chats by user id"
     );
@@ -249,7 +251,7 @@ export async function getChatById({ id }: { id: string }) {
 
     return selectedChat;
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
+    throw new WitelyError("bad_request:database", "Failed to get chat by id");
   }
 }
 
@@ -257,7 +259,7 @@ export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
     return await db.insert(message).values(messages);
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save messages");
+    throw new WitelyError("bad_request:database", "Failed to save messages");
   }
 }
 
@@ -269,7 +271,7 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get messages by chat id"
     );
@@ -303,7 +305,7 @@ export async function voteMessage({
       isUpvoted: type === "up",
     });
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to vote message");
+    throw new WitelyError("bad_request:database", "Failed to vote message");
   }
 }
 
@@ -311,7 +313,7 @@ export async function getVotesByChatId({ id }: { id: string }) {
   try {
     return await db.select().from(vote).where(eq(vote.chatId, id));
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get votes by chat id"
     );
@@ -344,7 +346,7 @@ export async function saveDocument({
       })
       .returning();
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save document");
+    throw new WitelyError("bad_request:database", "Failed to save document");
   }
 }
 
@@ -358,7 +360,7 @@ export async function getDocumentsById({ id }: { id: string }) {
 
     return documents;
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get documents by id"
     );
@@ -375,7 +377,7 @@ export async function getDocumentById({ id }: { id: string }) {
 
     return selectedDocument;
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get document by id"
     );
@@ -404,7 +406,7 @@ export async function deleteDocumentsByIdAfterTimestamp({
       .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
       .returning();
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to delete documents by id after timestamp"
     );
@@ -419,10 +421,7 @@ export async function saveSuggestions({
   try {
     return await db.insert(suggestion).values(suggestions);
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to save suggestions"
-    );
+    throw new WitelyError("bad_request:database", "Failed to save suggestions");
   }
 }
 
@@ -437,7 +436,7 @@ export async function getSuggestionsByDocumentId({
       .from(suggestion)
       .where(and(eq(suggestion.documentId, documentId)));
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get suggestions by document id"
     );
@@ -448,7 +447,7 @@ export async function getMessageById({ id }: { id: string }) {
   try {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get message by id"
     );
@@ -488,7 +487,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
         );
     }
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to delete messages by chat id after timestamp"
     );
@@ -508,7 +507,7 @@ export async function updateChatVisiblityById({
       .set({ visibility, updatedAt: new Date() })
       .where(eq(chat.id, chatId));
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to update chat visibility by id"
     );
@@ -561,7 +560,7 @@ export async function getMessageCountByUserId({
 
     return stats?.count ?? 0;
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get message count by user id"
     );
@@ -580,10 +579,7 @@ export async function createStreamId({
       .insert(stream)
       .values({ id: streamId, chatId, createdAt: new Date() });
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to create stream id"
-    );
+    throw new WitelyError("bad_request:database", "Failed to create stream id");
   }
 }
 
@@ -598,9 +594,105 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
 
     return streamIds.map(({ id }) => id);
   } catch (_error) {
-    throw new ChatSDKError(
+    throw new WitelyError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+export async function updatePersonalInformationByUserId({
+  userId,
+  personalInformation,
+}: {
+  userId: string;
+  personalInformation: PersonalInformationType;
+}) {
+  try {
+    return await db
+      .update(personalization)
+      .set({ information: personalInformation })
+      .where(eq(personalization.userId, userId));
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to update personal information by user id"
+    );
+  }
+}
+
+export async function createPersonalizationByUserId({
+  userId,
+  name,
+  email,
+}: {
+  userId: string;
+  name: string;
+  email: string;
+}) {
+  try {
+    const personalInformation: PersonalInformationType = {
+      name,
+      email,
+      phone: null,
+      addressLine1: null,
+      addressLine2: null,
+      city: null,
+      state: null,
+      zipCode: null,
+      country: null,
+      gender: null,
+    };
+
+    return await db
+      .insert(personalization)
+      .values({
+        userId,
+        information: personalInformation,
+      })
+      .returning();
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to create personalization by user id"
+    );
+  }
+}
+
+export async function updateBioByUserId({
+  userId,
+  bio,
+}: {
+  userId: string;
+  bio: string;
+}) {
+  try {
+    return await db
+      .update(personalization)
+      .set({ bio })
+      .where(eq(personalization.userId, userId));
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to update bio by user id"
+    );
+  }
+}
+
+export async function getAllPersonalizationsByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(personalization)
+      .where(eq(personalization.userId, userId));
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to get personalization by user id"
     );
   }
 }

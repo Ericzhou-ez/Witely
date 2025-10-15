@@ -14,11 +14,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useSettingsModal } from "@/hooks/use-settings-modal";
 import { toast } from "./toast";
+import { Kbd, KbdGroup } from "./ui/kbd";
 
 export function UserMenu() {
   const { status } = useSession();
   const router = useRouter();
+  const { open: openSettings } = useSettingsModal();
 
   return (
     <>
@@ -60,12 +63,18 @@ export function UserMenu() {
       <DropdownMenuItem
         className="cursor-pointer"
         onClick={() => {
-          // Handle settings navigation
-          router.push("/settings");
+          openSettings();
         }}
       >
-        <Settings className="mr-0.5 size-4" />
-        <span>Settings</span>
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Settings className="mr-0.5 size-4" />
+            <span>Settings</span>
+          </div>
+          <KbdGroup>
+            <Kbd>⌘,</Kbd>
+          </KbdGroup>
+        </div>
       </DropdownMenuItem>
 
       <DropdownMenuItem

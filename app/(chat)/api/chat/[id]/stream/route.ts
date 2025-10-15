@@ -7,7 +7,7 @@ import {
   getStreamIdsByChatId,
 } from "@/lib/db/queries";
 import type { Chat } from "@/lib/db/schema";
-import { ChatSDKError } from "@/lib/errors";
+import { WitelyError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { getStreamContext } from "../../route";
 
@@ -25,13 +25,13 @@ export async function GET(
   }
 
   if (!chatId) {
-    return new ChatSDKError("bad_request:api").toResponse();
+    return new WitelyError("bad_request:api").toResponse();
   }
 
   const session = await auth();
 
   if (!session?.user) {
-    return new ChatSDKError("unauthorized:chat").toResponse();
+    return new WitelyError("unauthorized:chat").toResponse();
   }
 
   let chat: Chat | null;
@@ -39,27 +39,27 @@ export async function GET(
   try {
     chat = await getChatById({ id: chatId });
   } catch {
-    return new ChatSDKError("not_found:chat").toResponse();
+    return new WitelyError("not_found:chat").toResponse();
   }
 
   if (!chat) {
-    return new ChatSDKError("not_found:chat").toResponse();
+    return new WitelyError("not_found:chat").toResponse();
   }
 
   if (chat.visibility === "private" && chat.userId !== session.user.id) {
-    return new ChatSDKError("forbidden:chat").toResponse();
+    return new WitelyError("forbidden:chat").toResponse();
   }
 
   const streamIds = await getStreamIdsByChatId({ chatId });
 
   if (!streamIds.length) {
-    return new ChatSDKError("not_found:stream").toResponse();
+    return new WitelyError("not_found:stream").toResponse();
   }
 
   const recentStreamId = streamIds.at(-1);
 
   if (!recentStreamId) {
-    return new ChatSDKError("not_found:stream").toResponse();
+    return new WitelyError("not_found:stream").toResponse();
   }
 
   const emptyDataStream = createUIMessageStream<ChatMessage>({

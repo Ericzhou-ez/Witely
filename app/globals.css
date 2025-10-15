@@ -86,6 +86,43 @@
   --sidebar: hsl(240 5.9% 10%);
 }
 
+/* define design tokens (paper theme) */
+.paper {
+  --background: hsl(40 40% 96%);
+  --foreground: hsl(30 15% 20%);
+  --card: hsl(42 45% 94%);
+  --card-foreground: hsl(30 15% 20%);
+  --popover: hsl(42 45% 94%);
+  --popover-foreground: hsl(30 15% 20%);
+  --primary: hsl(31, 26%, 19%);
+  --primary-foreground: hsl(42 45% 94%);
+  --secondary: hsl(38 30% 88%);
+  --secondary-foreground: hsl(30 20% 30%);
+  --muted: hsl(38 30% 88%);
+  --muted-foreground: hsl(30 10% 45%);
+  --accent: hsl(35 35% 85%);
+  --accent-foreground: hsl(30 20% 30%);
+  --destructive: hsl(0 70% 55%);
+  --destructive-foreground: hsl(42 45% 94%);
+  --border: hsl(35 25% 82%);
+  --input: hsl(35 25% 82%);
+  --ring: hsl(30 20% 30%);
+  --chart-1: hsl(25 75% 55%);
+  --chart-2: hsl(160 50% 45%);
+  --chart-3: hsl(200 40% 40%);
+  --chart-4: hsl(45 70% 60%);
+  --chart-5: hsl(15 80% 60%);
+  --sidebar-background: hsl(39, 31%, 89%);
+  --sidebar-foreground: hsl(30 15% 25%);
+  --sidebar-primary: hsl(30 20% 30%);
+  --sidebar-primary-foreground: hsl(42 45% 94%);
+  --sidebar-accent: hsl(38 28% 88%);
+  --sidebar-accent-foreground: hsl(30 20% 30%);
+  --sidebar-border: hsl(35 22% 85%);
+  --sidebar-ring: hsl(25 70% 50%);
+  --sidebar: hsl(40, 27%, 91%);
+}
+
 /* define theme */
 @theme {
   --font-sans: var(--font-geist);

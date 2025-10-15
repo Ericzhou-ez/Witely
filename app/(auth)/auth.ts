@@ -3,7 +3,11 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import type { DefaultJWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { createUser, getUser } from "@/lib/db/queries";
+import {
+  createPersonalizationByUserId,
+  createUser,
+  getUser,
+} from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
 
 export type UserType = "plus" | "pro" | "ultra" | "dev" | "free";
@@ -91,7 +95,7 @@ export const {
       }
 
       const [existingUser] = await getUser(user.email);
-  
+
       // for Oauth providers
       if (account?.provider === "google") {
         if (existingUser) {
@@ -107,6 +111,12 @@ export const {
           // Set the ID and type for the newly created user
           user.id = newUser.id;
           user.type = newUser.type;
+
+          await createPersonalizationByUserId({
+            userId: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+          });
         }
       }
 
