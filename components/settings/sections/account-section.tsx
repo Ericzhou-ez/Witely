@@ -3,7 +3,6 @@
 import { Check, Copy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "@/components/toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,13 +12,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/use-user";
 
 export function AccountSection() {
-  const { data: session } = useSession();
   const { user, isLoading } = useUser();
   const [copied, setCopied] = useState(false);
   const router = useRouter();
 
   const handleCopyUUID = async () => {
-    if (session?.user?.id) {
+    if (user?.id) {
       await navigator.clipboard.writeText(user?.id ?? "");
       setCopied(true);
       setTimeout(() => {
@@ -56,7 +54,6 @@ export function AccountSection() {
                 <AvatarImage
                   src={
                     user?.profileURL ||
-                    session?.user?.image ||
                     `https://avatar.vercel.sh/${user?.email}` ||
                     undefined
                   }

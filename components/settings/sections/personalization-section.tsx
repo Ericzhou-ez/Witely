@@ -49,6 +49,7 @@ export function PersonalizationSection() {
 
   // Bio states
   const [bio, setBio] = useState("");
+  const [originalBio, setOriginalBio] = useState("");
   const [isEditingBio, setIsEditingBio] = useState(false);
 
   // Fetch personalization data on mount
@@ -94,6 +95,7 @@ export function PersonalizationSection() {
         setCountry(values.country);
         setGender(values.gender);
         setBio(personalization.bio || "");
+        setOriginalBio(personalization.bio || "");
 
         // Store original values for comparison
         setOriginalValues(values);
@@ -212,8 +214,18 @@ export function PersonalizationSection() {
 
   // Cancel personal info editing
   const handleCancelPersonalInfo = useCallback(() => {
+    setName(originalValues.name);
+    setEmail(originalValues.email);
+    setPhone(originalValues.phone);
+    setAddressLine1(originalValues.addressLine1);
+    setAddressLine2(originalValues.addressLine2);
+    setCity(originalValues.city);
+    setState(originalValues.state);
+    setZipCode(originalValues.zipCode);
+    setCountry(originalValues.country);
+    setGender(originalValues.gender);
     setIsEditingPersonalInfo(false);
-  }, []);
+  }, [originalValues]);
 
   // Save bio
   const handleSaveBio = useCallback(async () => {
@@ -229,6 +241,7 @@ export function PersonalizationSection() {
         throw new Error("Failed to save bio");
       }
 
+      setOriginalBio(bio);
       toast({
         type: "success",
         description: "Bio saved successfully",
@@ -238,7 +251,7 @@ export function PersonalizationSection() {
       console.error("Error saving bio:", error);
       toast({
         type: "error",
-        description: "Failed to save bio",
+        description: "An unexpected error occurred",
       });
     } finally {
       setIsSaving(false);
@@ -247,8 +260,9 @@ export function PersonalizationSection() {
 
   // Cancel bio editing
   const handleCancelBio = useCallback(() => {
+    setBio(originalBio);
     setIsEditingBio(false);
-  }, []);
+  }, [originalBio]);
 
   // Edit personal info handler
   const handleEditPersonalInfo = useCallback(() => {

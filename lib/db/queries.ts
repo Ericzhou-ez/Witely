@@ -34,7 +34,9 @@ import {
   user,
   vote,
 } from "./schema";
-import type { PersonalInformation as PersonalInformationType } from "./types";
+import type {
+  PersonalInformation as PersonalInformationType,
+} from "./types";
 import { generateHashedPassword } from "./utils";
 
 // Optionally, if not using email/pass login, you can
@@ -615,25 +617,52 @@ export async function updatePersonalInformationByUserId({
   personalInformation: PersonalInformationType;
 }) {
   try {
-    const existing = await db
-      .select()
-      .from(personalization)
-      .where(eq(personalization.userId, userId));
-
-    if (existing.length > 0) {
-      return await db
-        .update(personalization)
-        .set({ information: personalInformation })
-        .where(eq(personalization.userId, userId));
-    }
-
     return await db
-      .insert(personalization)
-      .values({ userId, information: personalInformation });
+      .update(personalization)
+      .set({ information: personalInformation })
+      .where(eq(personalization.userId, userId));
   } catch (_error) {
     throw new WitelyError(
       "bad_request:personalization",
       "Failed to update personal information by user id"
+    );
+  }
+}
+
+export async function createPersonalizationByUserId({
+  userId,
+  name,
+  email,
+}: {
+  userId: string;
+  name: string;
+  email: string;
+}) {
+  try {
+    const personalInformation: PersonalInformationType = {
+      name,
+      email,
+      phone: null,
+      addressLine1: null,
+      addressLine2: null,
+      city: null,
+      state: null,
+      zipCode: null,
+      country: null,
+      gender: null,
+    };
+
+    return await db
+      .insert(personalization)
+      .values({
+        userId,
+        information: personalInformation,
+      })
+      .returning();
+  } catch (_error) {
+    throw new WitelyError(
+      "bad_request:personalization",
+      "Failed to create personalization by user id"
     );
   }
 }
@@ -662,7 +691,7 @@ export async function updateBioByUserId({
   } catch (_error) {
     throw new WitelyError(
       "bad_request:personalization",
-      "Failed to update personal information by user id"
+      "Failed to update bio by user id"
     );
   }
 }

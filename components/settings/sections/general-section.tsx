@@ -26,6 +26,15 @@ const accentColors = [
   { value: "pink", label: "Pink" },
 ];
 
+const accentColorMap: Record<string, string> = {
+  monochrome: "#808080",
+  orange: "#f97316",
+  blue: "#3b82f6",
+  green: "#22c55e",
+  purple: "#a855f7",
+  pink: "#ec4899",
+};
+
 const languages = [
   { value: "auto", label: "Auto-detect" },
   { value: "en", label: "English" },
@@ -73,22 +82,10 @@ export function GeneralSection() {
                 <SelectItem key={color.value} value={color.value}>
                   <div className="flex items-center gap-2">
                     <div
-                      className={`size-3 rounded-full bg-${color.value}-500`}
+                      className="size-3 rounded-full"
                       style={{
                         backgroundColor:
-                          color.value === "monochrome"
-                            ? "#808080"
-                            : color.value === "orange"
-                              ? "#f97316"
-                              : color.value === "blue"
-                                ? "#3b82f6"
-                                : color.value === "green"
-                                  ? "#22c55e"
-                                  : color.value === "purple"
-                                    ? "#a855f7"
-                                    : color.value === "pink"
-                                      ? "#ec4899"
-                                      : "#808080",
+                          accentColorMap[color.value] ?? "#808080",
                       }}
                     />
                     <span>{color.label}</span>

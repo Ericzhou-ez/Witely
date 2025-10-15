@@ -27,6 +27,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid input", issues: error.errors },
+        { status: 400 }
+      );
+    }
     console.error("Error posting user bio", error);
     return NextResponse.json(
       { error: "Failed to post user bio" },

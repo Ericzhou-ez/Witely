@@ -9,8 +9,8 @@ import {
 import type { PersonalInformation } from "@/lib/db/types";
 
 const updatesSchema = z.object({
-  name: z.string().max(100).optional(),
-  email: z.string().email().max(255).optional(),
+  name: z.string().min(5).max(100).optional(),
+  email: z.string().email().min(6).max(255).optional(),
   phone: z.string().max(20).optional(),
   addressLine1: z.string().max(100).optional(),
   addressLine2: z.string().max(100).optional(),
@@ -42,7 +42,10 @@ export async function PATCH(req: Request) {
     const records = await getAllPersonalizationsByUserId({ userId: user.id });
     const existingData = records[0]?.information;
 
-    const merged = { ...existingData, ...updates } as PersonalInformation;
+    const merged = {
+      ...(existingData || {}),
+      ...updates,
+    } as PersonalInformation;
 
     await updatePersonalInformationByUserId({
       userId: user.id,
@@ -51,6 +54,13 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid input", issues: error.errors },
+        { status: 400 }
+      );
+    }
+
     console.error("Error patching personal information", error);
     return NextResponse.json(
       { error: "Failed to patch personal information" },

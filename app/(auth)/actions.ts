@@ -2,7 +2,11 @@
 
 import { z } from "zod";
 
-import { createUser, getUser } from "@/lib/db/queries";
+import {
+  createPersonalizationByUserId,
+  createUser,
+  getUser,
+} from "@/lib/db/queries";
 
 import { signIn } from "./auth";
 
@@ -79,12 +83,18 @@ export const register = async (
     }
 
     // Whenever we create a new user in dev, we set the user.type to dev
-    await createUser({
+    const newUser = await createUser({
       email: validatedData.email,
       password: validatedData.password,
       name: validatedData.name,
       profileURL: null,
       type: "dev",
+    });
+
+    await createPersonalizationByUserId({
+      userId: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
     });
 
     await signIn("credentials", {

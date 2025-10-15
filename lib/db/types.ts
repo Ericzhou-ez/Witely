@@ -6,16 +6,16 @@ export type Gender =
   | "Other";
 
 export type PersonalInformation = {
-  name: string | undefined;
-  email: string | undefined;
-  phone: string | undefined;
-  addressLine1: string | undefined;
-  addressLine2: string | undefined;
-  city: string | undefined;
-  state: string | undefined;
-  zipCode: string | undefined;
-  country: string | undefined;
-  gender: Gender | undefined;
+  name: string;
+  email: string;
+  phone: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  country: string | null;
+  gender: Gender | null;
 };
 
 type Bio = string;
